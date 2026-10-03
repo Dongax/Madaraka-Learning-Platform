@@ -1,0 +1,22 @@
+{
+  "name": "madaraka-primary-platform",
+  "version": "1.0.0",
+  "description": "Madaraka Primary digital learning platform — Node.js/Express backend with a SQLite user database. Only admins can create accounts; a single login page routes every role to its own dashboard.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

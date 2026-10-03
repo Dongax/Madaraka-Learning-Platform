@@ -1,0 +1,2561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Madaraka Primary – Digital Learning Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:   #1A6B3A;
+    --green-lt:#2E8B57;
+    --gold:    #D4A017;
+    --gold-lt: #F5C842;
+    --red:     #B22222;
+    --cream:   #FDF6E3;
+    --ink:     #1A1A2E;
+    --muted:   #5A6475;
+    --border:  #E2DDD4;
+    --white:   #FFFFFF;
+    --student: #1565C0;
+    --teacher: #2E7D32;
+    --parent:  #6A1B9A;
+    --admin:   #B71C1C;
+    --radius:  12px;
+    --shadow:  0 4px 24px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+
+  /* ─── SCREENS ─── */
+  .screen{display:none;min-height:100vh;}
+  .screen.active{display:flex;flex-direction:column;}
+
+  /* ─── LOGIN ─── */
+  #login,#signup{background:linear-gradient(135deg,#0d3320 0%,#1A6B3A 60%,#2E8B57 100%);align-items:center;justify-content:center;padding:20px;}
+  .login-card{background:var(--white);border-radius:20px;padding:48px 40px 40px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .school-brand{text-align:center;margin-bottom:32px;}
+  .school-logo{width:72px;height:72px;background:linear-gradient(135deg,var(--green),var(--green-lt));border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px;}
+  .school-name{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--green);line-height:1.2;}
+  .school-tagline{font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:.5px;text-transform:uppercase;}
+  .form-group{margin-bottom:18px;}
+  .form-group label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
+  .form-group input,.form-group select{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;outline:none;transition:border-color .2s;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--green);}
+  .login-btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;margin-top:4px;background:var(--green);color:#fff;}
+  .login-btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+  .demo-hint{text-align:center;font-size:12px;color:var(--muted);margin-top:16px;}
+  .demo-hint strong{color:var(--green);}
+
+  /* ─── SHARED LAYOUT ─── */
+  .app-nav{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+  .nav-student{background:var(--student);}
+  .nav-teacher{background:var(--teacher);}
+  .nav-parent{background:var(--parent);}
+  .nav-admin{background:var(--admin);}
+  .nav-brand{display:flex;align-items:center;gap:10px;color:#fff;}
+  .nav-brand-icon{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .nav-brand-text{font-weight:700;font-size:16px;line-height:1.1;}
+  .nav-brand-sub{font-size:11px;opacity:.8;}
+  .nav-right{display:flex;align-items:center;gap:12px;}
+  .nav-badge{background:rgba(255,255,255,.2);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;}
+  .logout-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;}
+  .logout-btn:hover{background:rgba(255,255,255,.25);}
+  .app-body{flex:1;padding:28px;max-width:1280px;margin:0 auto;width:100%;}
+
+  /* ─── CARDS ─── */
+  .dashboard-header{margin-bottom:28px;}
+  .dashboard-header h1{font-family:'Lora',serif;font-size:28px;font-weight:600;color:var(--ink);}
+  .dashboard-header p{color:var(--muted);margin-top:4px;font-size:15px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;}
+  .stat-card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+  .stat-card .stat-icon{font-size:28px;margin-bottom:8px;}
+  .stat-card .stat-val{font-size:28px;font-weight:800;color:var(--ink);}
+  .stat-card .stat-label{font-size:13px;color:var(--muted);margin-top:2px;}
+  .stat-card.accent-green .stat-val{color:var(--green);}
+  .stat-card.accent-gold .stat-val{color:var(--gold);}
+  .stat-card.accent-red .stat-val{color:var(--red);}
+  .stat-card.accent-blue .stat-val{color:var(--student);}
+  .stat-card.accent-purple .stat-val{color:var(--parent);}
+  .section-title{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .section-title .badge{background:var(--border);color:var(--muted);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .card-title{font-size:15px;font-weight:700;color:var(--ink);}
+  .pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+  .pill-green{background:#E8F5E9;color:var(--green);}
+  .pill-gold{background:#FFF8E1;color:#B8860B;}
+  .pill-red{background:#FFEBEE;color:var(--red);}
+  .pill-blue{background:#E3F2FD;color:var(--student);}
+  .pill-purple{background:#F3E5F5;color:var(--parent);}
+
+  /* ─── SUBJECTS ─── */
+  .subject-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:20px;}
+  .subject-card{border-radius:var(--radius);padding:20px 14px;text-align:center;cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid transparent;}
+  .subject-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.12);}
+  .subject-card .sub-icon{font-size:36px;margin-bottom:8px;}
+  .subject-card .sub-name{font-size:13px;font-weight:700;}
+  .subject-card .sub-progress{font-size:11px;margin-top:4px;opacity:.75;}
+  .sub-english{background:#E3F2FD;border-color:#90CAF9;color:var(--student);}
+  .sub-math{background:#E8F5E9;border-color:#A5D6A7;color:var(--green);}
+  .sub-swahili{background:#FCE4EC;border-color:#F48FB1;color:#880E4F;}
+  .sub-religious{background:#F3E5F5;border-color:#CE93D8;color:var(--parent);}
+  .sub-enviro{background:#E0F2F1;border-color:#80CBC4;color:#00695C;}
+  .sub-creative{background:#FFF9C4;border-color:#FFE082;color:#8D6E00;}
+
+  /* ─── QUIZ ─── */
+  .quiz-box{background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-radius:var(--radius);padding:22px;border:1px solid #A5D6A7;}
+  .quiz-question{font-size:16px;font-weight:600;margin-bottom:16px;}
+  .quiz-options{display:grid;gap:8px;}
+  .quiz-opt{padding:11px 16px;border:2px solid var(--border);border-radius:8px;cursor:pointer;background:var(--white);font-size:14px;transition:all .15s;text-align:left;}
+  .quiz-opt:hover{border-color:var(--green-lt);background:#F1F8E9;}
+  .quiz-opt.correct{border-color:var(--green);background:#E8F5E9;color:var(--green);font-weight:600;}
+  .quiz-opt.wrong{border-color:var(--red);background:#FFEBEE;color:var(--red);}
+  .quiz-feedback{margin-top:10px;font-size:13px;font-weight:600;padding:8px 12px;border-radius:6px;}
+  .quiz-feedback.correct{background:#E8F5E9;color:var(--green);}
+  .quiz-feedback.wrong{background:#FFEBEE;color:var(--red);}
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-track{background:var(--border);border-radius:20px;height:8px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:20px;transition:width .6s ease;}
+  .progress-fill.green{background:linear-gradient(90deg,var(--green),var(--gold-lt));}
+  .progress-fill.blue{background:linear-gradient(90deg,var(--student),#42A5F5);}
+
+  /* ─── LESSON LIST ─── */
+  .lesson-list{display:grid;gap:10px;}
+  .lesson-row{display:flex;align-items:center;gap:14px;padding:14px;background:var(--white);border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:box-shadow .15s;}
+  .lesson-row:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);}
+  .lesson-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .lesson-info{flex:1;}
+  .lesson-title{font-size:14px;font-weight:700;}
+  .lesson-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .lesson-status{font-size:11px;font-weight:700;}
+
+  /* ─── TABLE ─── */
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{text-align:left;padding:10px 12px;background:var(--cream);color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);}
+  td{padding:11px 12px;border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#FAFAF8;}
+
+  /* ─── NOTICE BOARD ─── */
+  .notice-item{padding:12px 14px;border-left:4px solid var(--gold);background:#FFFDE7;border-radius:0 8px 8px 0;margin-bottom:10px;}
+  .notice-item h4{font-size:14px;font-weight:700;}
+  .notice-item p{font-size:13px;color:var(--muted);margin-top:3px;}
+  .notice-item .notice-date{font-size:11px;color:var(--muted);margin-top:4px;}
+
+  /* ─── ANNOUNCEMENTS (teacher) ─── */
+  .ann-item{display:flex;gap:12px;padding:12px;border-radius:8px;background:var(--cream);border:1px solid var(--border);margin-bottom:8px;}
+  .ann-item .ann-icon{font-size:22px;}
+  .ann-item h4{font-size:14px;font-weight:700;}
+  .ann-item p{font-size:13px;color:var(--muted);margin-top:2px;}
+
+  /* ─── STUDENT ASSIGNMENT ─── */
+  .assignment-card{padding:16px;border-radius:10px;border:1px solid var(--border);background:var(--white);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .assignment-card h4{font-size:14px;font-weight:700;}
+  .assignment-card p{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  /* ─── TABS ─── */
+  .tab-bar{display:flex;gap:4px;background:var(--border);border-radius:10px;padding:4px;margin-bottom:20px;}
+  .tab-btn{flex:1;padding:9px;border-radius:7px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);font-family:inherit;transition:all .15s;}
+  .tab-btn.active{background:var(--white);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  /* ─── ATTENDANCE ─── */
+  .attend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+  .attend-card{padding:12px;border-radius:8px;border:2px solid var(--border);text-align:center;background:var(--white);}
+  .attend-card .att-name{font-size:12px;font-weight:700;margin-top:6px;}
+  .attend-card .att-class{font-size:11px;color:var(--muted);}
+  .attend-card.present{border-color:var(--green-lt);background:#F1F8E9;}
+  .attend-card.absent{border-color:var(--red);background:#FFEBEE;}
+  .attend-card.late{border-color:var(--gold);background:#FFF8E1;}
+  .toggle-att{width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;font-size:16px;display:inline-flex;align-items:center;justify-content:center;}
+  .toggle-att.present-btn{background:#E8F5E9;color:var(--green);}
+  .toggle-att.absent-btn{background:#FFEBEE;color:var(--red);}
+  .toggle-att.late-btn{background:#FFF8E1;color:var(--gold);}
+  .att-status-row{display:flex;gap:5px;justify-content:center;margin-top:8px;}
+  .att-status-btn{flex:1;padding:5px 2px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);transition:all .15s;}
+  .att-status-btn.active.present{background:var(--green);border-color:var(--green);color:#fff;}
+  .att-status-btn.active.absent{background:var(--red);border-color:var(--red);color:#fff;}
+  .att-status-btn.active.late{background:var(--gold);border-color:var(--gold);color:#fff;}
+
+  /* ─── PARENT CHILD CARD ─── */
+  .child-banner{background:linear-gradient(135deg,var(--parent),#9C27B0);border-radius:var(--radius);padding:22px;color:#fff;margin-bottom:20px;display:flex;align-items:center;gap:16px;}
+  .child-avatar{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+  .child-name{font-size:20px;font-weight:700;}
+  .child-class{font-size:13px;opacity:.85;margin-top:2px;}
+  .child-adm{font-size:12px;opacity:.7;margin-top:4px;}
+
+  /* ─── MSG ─── */
+  .msg-list{display:grid;gap:10px;}
+  .msg-bubble{padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--white);}
+  .msg-bubble .msg-from{font-size:13px;font-weight:700;color:var(--green);}
+  .msg-bubble .msg-text{font-size:14px;margin-top:4px;}
+  .msg-bubble .msg-time{font-size:11px;color:var(--muted);margin-top:6px;}
+  .msg-compose{display:flex;gap:8px;margin-top:12px;}
+  .msg-compose input{flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;}
+  .msg-compose input:focus{border-color:var(--green);}
+  .msg-compose button{padding:10px 18px;background:var(--green);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;}
+
+  /* ─── OFFLINE BANNER ─── */
+  .offline-banner{background:linear-gradient(90deg,#FF6F00,#FFA726);color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:600;display:none;}
+  .offline-banner.show{display:block;}
+
+  /* ─── RESPONSIVE ─── */
+  @media(max-width:640px){
+    .grid-2,.grid-3{grid-template-columns:1fr;}
+    .app-body{padding:16px;}
+    .app-nav{padding:0 16px;}
+  }
+
+  /* ─── LOADER ─── */
+  .loader{display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div id="offline-bar" class="offline-banner">⚡ Offline Mode – Cached content available</div>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="login" class="screen active">
+  <div class="login-card">
+    <div class="school-brand">
+      <div class="school-logo">🏫</div>
+      <div class="school-name">Madaraka Primary School</div>
+      <div class="school-tagline">CBE Digital Learning Platform · Nairobi</div>
+    </div>
+
+    <div class="form-group">
+      <label>Login ID</label>
+      <input id="login-id" type="text" placeholder="Admission No. / Staff ID / Parent ID / Admin Username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input id="login-pass" type="password" placeholder="Enter your password">
+    </div>
+
+    <div id="login-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <p class="demo-hint">Don't have an account? Ask your school administrator to create one for you.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STUDENT DASHBOARD
+══════════════════════════════════════════ -->
+<div id="student-dash" class="screen">
+  <nav class="app-nav nav-student">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">🎒</div>
+      <div>
+        <div class="nav-brand-text">Madaraka Primary</div>
+        <div class="nav-brand-sub">Student Portal</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge" id="student-class-badge">Grade 2 · Stream A</span>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <div class="dashboard-header">
+      <h1 id="student-welcome">Good morning, Amina! 👋</h1>
+      <p id="student-subtitle">Tuesday, 7 May 2025 · Term 2, Week 4</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat-card accent-blue">
+        <div class="stat-icon">📚</div>
+        <div class="stat-val">6</div>
+        <div class="stat-label">CBC Learning Areas</div>
+      </div>
+      <div class="stat-card accent-green">
+        <div class="stat-icon">✅</div>
+        <div class="stat-val" id="s-att-rate-stat">—</div>
+        <div class="stat-label">Attendance Rate</div>
+      </div>
+      <div class="stat-card accent-gold">
+        <div class="stat-icon">🧠</div>
+        <div class="stat-val" id="s-quiz-count-stat">0</div>
+        <div class="stat-label">Quiz Questions Available</div>
+      </div>
+      <div class="stat-card accent-red">
+        <div class="stat-icon">📖</div>
+        <div class="stat-val" id="s-materials-count-stat">0</div>
+        <div class="stat-label">Materials Shared by Teacher</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('s','s-subjects',this)">📚 Learning Areas</button>
+      <button class="tab-btn" onclick="switchTab('s','s-quiz',this)">🧠 Quiz</button>
+      <button class="tab-btn" onclick="switchTab('s','s-lessons',this)">📖 Lessons</button>
+      <button class="tab-btn" onclick="switchTab('s','s-library',this)">📗 CBC Library</button>
+      <button class="tab-btn" onclick="switchTab('s','s-progress',this)">📊 Progress</button>
+    </div>
+
+    <!-- Subjects Tab -->
+    <div id="s-subjects" class="tab-content active">
+      <p class="section-title">Your CBE Learning Areas — Lower Primary</p>
+      <div class="subject-grid">
+        <div class="subject-card sub-english" onclick="switchToLibraryArea('English Language Activities')">
+          <div class="sub-icon">📖</div>
+          <div class="sub-name">English Language</div>
+          <div class="sub-progress">Strand: Reading &amp; Listening</div>
+        </div>
+        <div class="subject-card sub-swahili" onclick="switchToLibraryArea('Kiswahili Language Activities')">
+          <div class="sub-icon">🗣️</div>
+          <div class="sub-name">Kiswahili Language</div>
+          <div class="sub-progress">Strand: Kusoma</div>
+        </div>
+        <div class="subject-card sub-math" onclick="switchToLibraryArea('Mathematical Activities')">
+          <div class="sub-icon">🔢</div>
+          <div class="sub-name">Mathematical Activities</div>
+          <div class="sub-progress">Strand: Numbers</div>
+        </div>
+        <div class="subject-card sub-enviro" onclick="switchToLibraryArea('Environmental Activities')">
+          <div class="sub-icon">🌿</div>
+          <div class="sub-name">Environmental Activities</div>
+          <div class="sub-progress">Strand: Living Things</div>
+        </div>
+        <div class="subject-card sub-religious" onclick="switchToLibraryArea('Religious Education Activities')">
+          <div class="sub-icon">🙏</div>
+          <div class="sub-name">Religious Education</div>
+          <div class="sub-progress">Strand: Creation</div>
+        </div>
+        <div class="subject-card sub-creative" onclick="switchToLibraryArea('Creative Activities')">
+          <div class="sub-icon">🎨</div>
+          <div class="sub-name">Creative Activities</div>
+          <div class="sub-progress">Art, Music &amp; Movement</div>
+        </div>
+      </div>
+
+      <!-- Materials the class teacher has shared -->
+      <p class="section-title" style="margin-top:8px">📚 Materials from <span id="s-subjects-teacher">Your Class Teacher</span> <span class="badge" id="s-subjects-material-count">0</span></p>
+      <div class="lesson-list" id="s-subjects-materials">
+        <div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Quiz Tab -->
+    <div id="s-quiz" class="tab-content">
+      <p class="section-title">🧠 Class Quiz <span class="badge" id="s-quiz-count">0 questions</span></p>
+      <div class="quiz-box" id="quiz-container">
+        <!-- Quiz rendered by JS from real class quiz questions -->
+      </div>
+    </div>
+
+    <!-- Lessons Tab -->
+    <div id="s-lessons" class="tab-content">
+      <p class="section-title">📆 My Timetable</p>
+      <div class="card" style="margin-bottom:20px;overflow-x:auto;">
+        <table id="s-timetable-table">
+          <thead><tr><th>Day</th><th>Time</th><th>Learning Area</th><th>Topic</th></tr></thead>
+          <tbody id="s-timetable-body"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <p class="section-title">📖 Learning Materials</p>
+      <div class="lesson-list" id="s-lessons-materials">
+        <div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div>
+      </div>
+    </div>
+
+    <!-- CBC Library Tab -->
+    <div id="s-library" class="tab-content">
+      <p class="section-title">📗 CBC Lower Primary Course Books <span class="badge" id="s-library-count">0 books</span></p>
+      <div class="card" style="padding:14px;margin-bottom:16px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <select id="s-lib-grade" onchange="loadStudentLibrary()" style="padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+            <option value="">All Grades</option>
+            <option value="Grade 1">Grade 1</option>
+            <option value="Grade 2">Grade 2</option>
+            <option value="Grade 3">Grade 3</option>
+          </select>
+          <select id="s-lib-area" onchange="loadStudentLibrary()" style="padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+            <option value="">All Learning Areas</option>
+            <option value="English Language Activities">English Language Activities</option>
+            <option value="Kiswahili Language Activities">Kiswahili Language Activities</option>
+            <option value="Mathematical Activities">Mathematical Activities</option>
+            <option value="Environmental Activities">Environmental Activities</option>
+            <option value="Religious Education Activities">Religious Education Activities</option>
+            <option value="Creative Activities">Creative Activities</option>
+          </select>
+        </div>
+      </div>
+      <div class="lesson-list" id="s-library-list">
+        <div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px;">Titles reflect KICD-approved lower-primary (Grade 1–3) CBC course books. Tap a title to open it — 🔗 goes to the book's publisher (official site, to buy or find a digital copy), 🔎 opens a web search for that title (no publisher link has been added yet). Always confirm the current approved list with KICD before purchasing.</p>
+    </div>
+
+    <!-- Progress Tab -->
+    <div id="s-progress" class="tab-content">
+      <p class="section-title">📊 My Attendance</p>
+      <div class="card">
+        <div class="card-header"><div class="card-title">This Term</div><span class="pill pill-green" id="s-att-rate-pill">—</span></div>
+        <div class="progress-track"><div class="progress-fill green" id="s-att-rate-bar" style="width:0%"></div></div>
+        <p style="font-size:13px;color:var(--muted);margin-top:8px" id="s-att-summary">No attendance has been recorded for you yet.</p>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <p class="section-title" style="margin-top:0;">🗓️ Recent Days</p>
+        <table>
+          <thead><tr><th>Date</th><th>Status</th></tr></thead>
+          <tbody id="s-att-history"><tr><td colspan="2" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TEACHER DASHBOARD
+══════════════════════════════════════════ -->
+<div id="teacher-dash" class="screen">
+  <nav class="app-nav nav-teacher">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">👩‍🏫</div>
+      <div>
+        <div class="nav-brand-text">Madaraka Primary</div>
+        <div class="nav-brand-sub">Teacher Portal</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge" id="teacher-class-badge">Grade 2 Class Teacher</span>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <div class="dashboard-header">
+      <h1 id="teacher-welcome">Welcome, Tr. Pam Oduor 👋</h1>
+      <p id="teacher-subtitle">Tuesday, 7 May 2025 · Grade 2 Stream A · 32 learners</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card accent-green">
+        <div class="stat-icon">👧</div>
+        <div class="stat-val" id="teacher-class-size">0</div>
+        <div class="stat-label">Class Learners</div>
+      </div>
+      <div class="stat-card accent-blue">
+        <div class="stat-icon">✅</div>
+        <div class="stat-val" id="teacher-present-today">—</div>
+        <div class="stat-label">Present Today</div>
+      </div>
+      <div class="stat-card accent-gold">
+        <div class="stat-icon">📖</div>
+        <div class="stat-val" id="teacher-materials-count">0</div>
+        <div class="stat-label">Materials Shared</div>
+      </div>
+      <div class="stat-card accent-red">
+        <div class="stat-icon">🧠</div>
+        <div class="stat-val" id="teacher-quiz-count">0</div>
+        <div class="stat-label">Quiz Questions Set</div>
+      </div>
+    </div>
+
+    <div id="teacher-no-class-notice" style="display:none;background:#FFF8E1;border-left:4px solid var(--gold);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;">
+      ⚠️ You haven't been assigned to a class yet. Ask your school administrator to assign you one from the Admin dashboard so your class roster, attendance, and results reflect your real learners.
+    </div>
+
+    <!-- Teacher Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('t','t-class',this)">📋 Class</button>
+      <button class="tab-btn" onclick="switchTab('t','t-attendance',this)">📅 Attendance</button>
+      <button class="tab-btn" onclick="switchTab('t','t-upload',this)">📤 Materials</button>
+      <button class="tab-btn" onclick="switchTab('t','t-quizzes',this)">🧠 Quizzes</button>
+      <button class="tab-btn" onclick="switchTab('t','t-results',this)">📊 Results</button>
+      <button class="tab-btn" onclick="switchTab('t','t-messages',this)">💬 Messages</button>
+    </div>
+
+    <!-- Class Tab -->
+    <div id="t-class" class="tab-content active">
+      <div class="grid-2">
+        <div>
+          <p class="section-title">📆 My Timetable <span class="badge" id="t-timetable-count">0 periods</span></p>
+          <div class="card" style="padding:14px;overflow-x:auto;">
+            <table>
+              <thead><tr><th>Day</th><th>Time</th><th>Learning Area</th><th>Topic</th><th></th></tr></thead>
+              <tbody id="t-timetable-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <p class="section-title">➕ Add a Period</p>
+          <div class="card">
+            <div class="form-group">
+              <label>Day</label>
+              <select id="tt-day" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+                <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div class="form-group" style="flex:1;">
+                <label>Start Time</label>
+                <input id="tt-start" type="time" value="08:00" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>End Time</label>
+                <input id="tt-end" type="time" value="08:40" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Learning Area</label>
+              <select id="tt-area" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+                <option>English Language Activities</option><option>Kiswahili Language Activities</option><option>Mathematical Activities</option><option>Environmental Activities</option><option>Religious Education Activities</option><option>Creative Activities</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Topic (optional)</label>
+              <input id="tt-topic" type="text" placeholder="e.g. Addition up to 100" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+            </div>
+            <div id="tt-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+            <button onclick="addTimetablePeriod()" style="width:100%;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Add to Timetable 📆</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Tab (Class Register) -->
+    <div id="t-attendance" class="tab-content">
+      <p class="section-title">📅 Class Register — <span id="teacher-attendance-class">Grade 2A</span> <span class="badge" id="att-count">0/0 present</span></p>
+      <div class="card">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+          <label style="font-size:13px;font-weight:600;color:var(--muted);">Date</label>
+          <input id="register-date" type="date" onchange="loadRegister()" style="padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+        </div>
+        <div id="register-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+        <div class="attend-grid" id="attend-grid"><div style="color:var(--muted);padding:16px;">Loading…</div></div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button onclick="markAll('present')" style="padding:9px 18px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">✓ Mark All Present</button>
+          <button onclick="markAll('absent')" style="padding:9px 18px;background:var(--red);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">✗ Mark All Absent</button>
+          <button onclick="saveRegister()" style="padding:9px 18px;background:var(--student);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">💾 Save Register</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Materials Tab -->
+    <div id="t-upload" class="tab-content">
+      <div class="grid-2">
+        <div>
+          <p class="section-title">📤 Share Learning Material</p>
+          <div class="card">
+            <div class="form-group">
+              <label>Learning Area</label>
+              <select id="mt-area" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+                <option>English Language Activities</option><option>Kiswahili Language Activities</option><option>Mathematical Activities</option><option>Environmental Activities</option><option>Religious Education Activities</option><option>Creative Activities</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Title</label>
+              <input id="mt-title" type="text" placeholder="e.g. Long Vowel Sounds Worksheet" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+            </div>
+            <div class="form-group">
+              <label>Notes / Resource Link (optional)</label>
+              <textarea id="mt-notes" placeholder="Add a description, or paste a link to a PDF/video/audio resource…" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;min-height:70px;outline:none;margin-bottom:14px;"></textarea>
+            </div>
+            <div id="mt-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+            <button onclick="addMaterial()" style="width:100%;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Share with Class 📤</button>
+            <p style="font-size:12px;color:var(--muted);margin-top:10px;">There's no file-storage backend yet, so this stores a title, learning area and notes/link — not the file itself.</p>
+          </div>
+        </div>
+        <div>
+          <p class="section-title">📚 Shared Materials <span class="badge" id="t-materials-count-badge">0</span></p>
+          <div class="lesson-list" id="t-materials-list">
+            <div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quizzes Tab -->
+    <div id="t-quizzes" class="tab-content">
+      <div class="grid-2">
+        <div>
+          <p class="section-title">🧠 Create a Quiz Question</p>
+          <div class="card">
+            <div class="form-group">
+              <label>Question Type</label>
+              <select id="nq-type" onchange="onQuizTypeChange()" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+                <option value="structured">Structured (multiple choice)</option>
+                <option value="unstructured">Unstructured (open-ended, no options)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Learning Area / Strand</label>
+              <select id="nq-area" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+                <option>English Language Activities</option>
+                <option>Kiswahili Language Activities</option>
+                <option>Mathematical Activities</option>
+                <option>Environmental Activities</option>
+                <option>Religious Education Activities</option>
+                <option>Creative Activities</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Question</label>
+              <input id="nq-question" type="text" placeholder="e.g. Which animal says 'moo'?" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+            </div>
+            <div id="nq-options-group">
+              <div class="form-group">
+                <label>Option A</label>
+                <input id="nq-opt1" type="text" placeholder="Answer option A" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              </div>
+              <div class="form-group">
+                <label>Option B</label>
+                <input id="nq-opt2" type="text" placeholder="Answer option B" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              </div>
+              <div class="form-group">
+                <label>Option C</label>
+                <input id="nq-opt3" type="text" placeholder="Answer option C" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              </div>
+              <div class="form-group">
+                <label>Option D</label>
+                <input id="nq-opt4" type="text" placeholder="Answer option D" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              </div>
+              <div class="form-group">
+                <label>Correct Answer</label>
+                <select id="nq-correct" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+                  <option value="0">A</option>
+                  <option value="1">B</option>
+                  <option value="2">C</option>
+                  <option value="3">D</option>
+                </select>
+              </div>
+            </div>
+            <p id="nq-unstructured-hint" style="display:none;font-size:12px;color:var(--muted);margin:-6px 0 14px;">Students will type a free-text answer for you to read — there's no single correct answer to mark automatically.</p>
+            <div id="nq-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+            <button onclick="addQuiz()" style="width:100%;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Add to Class Quiz 🧠</button>
+          </div>
+        </div>
+        <div>
+          <p class="section-title">📋 Quiz Bank <span class="badge" id="quiz-bank-count">0 questions</span></p>
+          <div class="lesson-list" id="quiz-manage-list"><div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Tab -->
+    <div id="t-results" class="tab-content">
+      <p class="section-title">📊 Attendance Summary — <span id="teacher-performance-class">Grade 2A</span></p>
+      <div class="card">
+        <table>
+          <thead><tr><th>Student</th><th>Present</th><th>Absent</th><th>Late</th><th>Attendance Rate</th></tr></thead>
+          <tbody id="t-results-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
+        </table>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px">Computed from the class register — this reflects the attendance you've actually recorded. There is no competency/grading feature yet.</p>
+      </div>
+    </div>
+
+    <!-- Messages Tab -->
+    <div id="t-messages" class="tab-content">
+      <div class="grid-2">
+        <div>
+          <p class="section-title">💬 Conversation about <span id="t-msg-student-name">a student</span></p>
+          <div class="msg-list" id="t-msg-thread"><div style="text-align:center;color:var(--muted);padding:20px;">Select a student to view messages.</div></div>
+        </div>
+        <div>
+          <p class="section-title">📤 Send Message to Parent</p>
+          <div class="card">
+            <div class="form-group">
+              <label>Select Student</label>
+              <select id="t-msg-student" onchange="loadTeacherThread()" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+                <option value="">Loading…</option>
+              </select>
+            </div>
+            <div class="msg-compose" style="display:block">
+              <textarea id="t-msg-body" placeholder="Type your message to parent..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;min-height:80px;outline:none;margin-bottom:10px;"></textarea>
+              <div id="t-msg-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:10px;"></div>
+              <button onclick="sendTeacherMessage()" style="width:100%;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Send Message 📨</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PARENT DASHBOARD
+══════════════════════════════════════════ -->
+<div id="parent-dash" class="screen">
+  <nav class="app-nav nav-parent">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">👨‍👩‍👧</div>
+      <div>
+        <div class="nav-brand-text">Madaraka Primary</div>
+        <div class="nav-brand-sub">Parent Portal</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge">Parent / Guardian</span>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <div class="dashboard-header">
+      <h1 id="parent-welcome">Welcome, Mr. Samuel Wanjiku 👋</h1>
+      <p>Madaraka Primary School Parent Portal</p>
+    </div>
+
+    <!-- Child Selector (shown only when more than one student is linked) -->
+    <div class="form-group" id="parent-child-picker-group" style="display:none;max-width:340px;margin-bottom:14px;">
+      <label>Viewing</label>
+      <select id="parent-child-picker" onchange="onParentChildChange()" style="width:100%;padding:11px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;"></select>
+    </div>
+
+    <!-- Child Banner -->
+    <div class="child-banner" id="parent-child-banner">
+      <div class="child-avatar">👧</div>
+      <div>
+        <div class="child-name" id="parent-child-name">Amina Wanjiku</div>
+        <div class="child-class" id="parent-child-class">Grade 2 · Stream A · Class Teacher: Tr. Dalmas Okoth</div>
+        <div class="child-adm" id="parent-child-adm">Admission No. MPS-2024-0042</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-size:28px;font-weight:800;" id="parent-banner-att-rate">—</div>
+        <div style="font-size:12px;opacity:.8;">Attendance Rate</div>
+      </div>
+    </div>
+
+    <!-- Shown instead of the banner/tabs when no student is linked yet -->
+    <div class="child-banner" id="parent-no-child-banner" style="display:none;background:#FFF8E1;color:var(--ink);">
+      <div class="child-avatar" style="background:rgba(0,0,0,.06)">⚠️</div>
+      <div>
+        <div class="child-name" style="color:var(--ink)">No students linked to your account yet</div>
+        <div class="child-class" style="color:var(--muted)">Ask the school administrator to link your child's student account to this parent account.</div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card accent-green">
+        <div class="stat-icon">✅</div>
+        <div class="stat-val" id="parent-stat-present">—</div>
+        <div class="stat-label">Days Present Recorded</div>
+      </div>
+      <div class="stat-card accent-blue">
+        <div class="stat-icon">📅</div>
+        <div class="stat-val" id="parent-stat-rate">—</div>
+        <div class="stat-label">Attendance Rate</div>
+      </div>
+      <div class="stat-card accent-gold">
+        <div class="stat-icon">📚</div>
+        <div class="stat-val" id="parent-stat-materials">0</div>
+        <div class="stat-label">Materials Shared</div>
+      </div>
+      <div class="stat-card accent-purple">
+        <div class="stat-icon">💬</div>
+        <div class="stat-val" id="parent-stat-messages">0</div>
+        <div class="stat-label">Messages in Thread</div>
+      </div>
+    </div>
+
+    <!-- Parent Tabs (hidden entirely when no student is linked yet) -->
+    <div id="parent-tabs-wrapper">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('p','p-timetable',this)">📆 Timetable</button>
+      <button class="tab-btn" onclick="switchTab('p','p-attendance',this)">📅 Attendance</button>
+      <button class="tab-btn" onclick="switchTab('p','p-materials',this)">📚 Materials</button>
+      <button class="tab-btn" onclick="switchTab('p','p-messages',this)">💬 Messages</button>
+    </div>
+
+    <!-- Timetable -->
+    <div id="p-timetable" class="tab-content active">
+      <p class="section-title">📆 <span id="parent-tt-childname">This student's</span> Timetable</p>
+      <div class="card" style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Day</th><th>Time</th><th>Learning Area</th><th>Topic</th></tr></thead>
+          <tbody id="p-timetable-body"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Attendance -->
+    <div id="p-attendance" class="tab-content">
+      <p class="section-title">📅 Attendance Record</p>
+      <div class="card">
+        <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+          <div class="stat-card accent-green" style="flex:1;min-width:120px"><div class="stat-icon">✅</div><div class="stat-val" id="p-att-present">—</div><div class="stat-label">Days Present</div></div>
+          <div class="stat-card accent-red" style="flex:1;min-width:120px"><div class="stat-icon">❌</div><div class="stat-val" id="p-att-absent">—</div><div class="stat-label">Days Absent</div></div>
+          <div class="stat-card accent-gold" style="flex:1;min-width:120px"><div class="stat-icon">📊</div><div class="stat-val" id="p-att-rate">—</div><div class="stat-label">Attendance Rate</div></div>
+        </div>
+        <table>
+          <thead><tr><th>Date</th><th>Status</th></tr></thead>
+          <tbody id="p-att-history"><tr><td colspan="2" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Materials -->
+    <div id="p-materials" class="tab-content">
+      <p class="section-title">📚 Materials Shared by <span id="parent-materials-teacher">the Class Teacher</span> <span class="badge" id="p-materials-count">0</span></p>
+      <div class="lesson-list" id="p-materials-list">
+        <div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="p-messages" class="tab-content">
+      <div class="grid-2">
+        <div>
+          <p class="section-title">💬 Conversation with <span id="parent-msg-thread-teacher">the Class Teacher</span></p>
+          <div class="msg-list" id="p-msg-thread"><div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div></div>
+        </div>
+        <div>
+          <p class="section-title">📤 Message the Class Teacher</p>
+          <div class="card">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Message will be sent to <strong id="parent-send-teacher-name">the class teacher</strong></p>
+            <textarea placeholder="Type your message..." id="parent-msg" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;min-height:90px;outline:none;margin-bottom:10px;"></textarea>
+            <div id="parent-msg-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:10px;"></div>
+            <button onclick="sendMessageToTeacher()" style="width:100%;padding:11px;background:var(--parent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Send Message 📨</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div><!-- /#parent-tabs-wrapper -->
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ADMIN DASHBOARD
+══════════════════════════════════════════ -->
+<div id="admin-dash" class="screen">
+  <nav class="app-nav nav-admin">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">🛠️</div>
+      <div>
+        <div class="nav-brand-text">Madaraka Primary</div>
+        <div class="nav-brand-sub">Admin Portal</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge">School Administrator</span>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <div class="dashboard-header">
+      <h1 id="admin-welcome">Welcome, Admin 👋</h1>
+      <p>Only administrators can create student, teacher, parent, and admin accounts.</p>
+    </div>
+
+    <div class="stat-grid" style="margin-bottom:20px;">
+      <div class="stat-card accent-blue">
+        <div class="stat-icon">🎒</div>
+        <div class="stat-val" id="acc-count-student">0</div>
+        <div class="stat-label">Student Accounts</div>
+      </div>
+      <div class="stat-card accent-green">
+        <div class="stat-icon">👩‍🏫</div>
+        <div class="stat-val" id="acc-count-teacher">0</div>
+        <div class="stat-label">Teacher Accounts</div>
+      </div>
+      <div class="stat-card accent-purple">
+        <div class="stat-icon">👨‍👩‍👧</div>
+        <div class="stat-val" id="acc-count-parent">0</div>
+        <div class="stat-label">Parent Accounts</div>
+      </div>
+      <div class="stat-card accent-red">
+        <div class="stat-icon">🛠️</div>
+        <div class="stat-val" id="acc-count-admin">0</div>
+        <div class="stat-label">Admin Accounts</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="section-title">🗂️ Login Directory <span class="badge" id="acc-total-badge">0 accounts</span></div>
+        <div class="card" style="padding:14px;">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <input id="acc-search" type="text" placeholder="Search by name or ID…" oninput="renderAccountsTable()" style="flex:1;min-width:160px;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+            <select id="acc-filter-role" onchange="renderAccountsTable()" style="padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+              <option value="all">All roles</option>
+              <option value="student">Students</option>
+              <option value="teacher">Teachers</option>
+              <option value="parent">Parents</option>
+              <option value="admin">Admins</option>
+            </select>
+          </div>
+          <div id="admin-users-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:12px;"></div>
+          <div style="max-height:420px;overflow-y:auto;">
+            <table>
+              <thead>
+                <tr><th>Role</th><th>Login ID</th><th>Name</th><th>Class</th><th>Details</th><th>Created</th><th></th></tr>
+              </thead>
+              <tbody id="accounts-table-body"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="section-title">➕ Create New Account</p>
+        <div class="card">
+          <div class="form-group">
+            <label>Role</label>
+            <select id="na-role" onchange="onNewAccountRoleChange()" style="width:100%;padding:11px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+              <option value="parent">Parent</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input id="na-name" type="text" placeholder="e.g. John Kamau">
+          </div>
+          <div class="form-group">
+            <label>Login ID</label>
+            <input id="na-id" type="text" placeholder="e.g. MPS-2025-0099">
+          </div>
+          <div class="form-group">
+            <label>Temporary Password</label>
+            <input id="na-pass" type="text" placeholder="Set a password (min 6 characters)">
+          </div>
+
+          <!-- Shown for Student / Teacher: assign the correct class -->
+          <div class="form-group" id="na-class-group">
+            <label id="na-class-label">Class</label>
+            <select id="na-class" style="width:100%;padding:11px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              <option value="">— Select a class —</option>
+            </select>
+          </div>
+
+          <!-- Shown for Teacher only: what they teach in that class -->
+          <div class="form-group" id="na-subject-group" style="display:none;">
+            <label>Subject / Learning Area</label>
+            <input id="na-subject" type="text" placeholder="e.g. Mathematical Activities">
+          </div>
+
+          <!-- Shown for Parent only: link to one or more existing students -->
+          <div class="form-group" id="na-children-group" style="display:none;">
+            <label>Link to Student(s)</label>
+            <div id="na-children-list" style="max-height:180px;overflow-y:auto;border:2px solid var(--border);border-radius:8px;padding:10px;">
+              <div style="color:var(--muted);font-size:13px;">Loading students…</div>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-top:6px;">Check every child this parent account should see. A parent can be linked to more than one student — e.g. siblings.</p>
+          </div>
+
+          <div id="admin-create-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+          <button onclick="createAccount()" style="width:100%;padding:12px;background:var(--admin);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;">Create Account ✓</button>
+          <p style="font-size:12px;color:var(--muted);margin-top:10px;">New accounts are created directly in the school database and can sign in immediately. Students, teachers and parents cannot self-register.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-title" style="margin-top:28px;">🔗 Parent–Student Links</p>
+    <div class="card" style="margin-bottom:8px;">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Jump straight to managing which students a parent account is linked to, without scrolling the directory table below.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="flex:1;min-width:220px;margin-bottom:0;">
+          <label>Parent Account</label>
+          <select id="pl-parent-select" style="width:100%;padding:11px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+            <option value="">— Select a parent —</option>
+          </select>
+        </div>
+        <button onclick="openChildrenModalFromPicker()" style="padding:12px 20px;background:var(--admin);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;white-space:nowrap;">🔗 Manage Links</button>
+      </div>
+    </div>
+
+    <p class="section-title" style="margin-top:28px;">📗 CBC Lower Primary Course Book Library <span class="badge" id="lib-total-badge">0 books</span></p>
+    <div class="grid-2">
+      <div>
+        <div class="card" style="padding:14px;">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <select id="lib-filter-grade" onchange="loadLibrary()" style="padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+              <option value="">All Grades</option>
+              <option value="Grade 1">Grade 1</option>
+              <option value="Grade 2">Grade 2</option>
+              <option value="Grade 3">Grade 3</option>
+            </select>
+            <select id="lib-filter-area" onchange="loadLibrary()" style="padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+              <option value="">All Learning Areas</option>
+              <option value="English Language Activities">English Language Activities</option>
+              <option value="Kiswahili Language Activities">Kiswahili Language Activities</option>
+              <option value="Mathematical Activities">Mathematical Activities</option>
+              <option value="Environmental Activities">Environmental Activities</option>
+              <option value="Religious Education Activities">Religious Education Activities</option>
+              <option value="Creative Activities">Creative Activities</option>
+            </select>
+          </div>
+          <div id="admin-library-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:12px;"></div>
+          <div style="max-height:420px;overflow-y:auto;">
+            <table>
+              <thead>
+                <tr><th>Grade</th><th>Learning Area</th><th>Title</th><th>Publisher</th><th></th></tr>
+              </thead>
+              <tbody id="library-table-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="section-title">➕ Add a Course Book</p>
+        <div class="card">
+          <div class="form-group">
+            <label>Grade</label>
+            <select id="nb-grade" style="width:100%;padding:11px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              <option value="Grade 1">Grade 1</option>
+              <option value="Grade 2">Grade 2</option>
+              <option value="Grade 3">Grade 3</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Learning Area</label>
+            <select id="nb-area" style="width:100%;padding:11px 12px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+              <option>English Language Activities</option>
+              <option>Kiswahili Language Activities</option>
+              <option>Mathematical Activities</option>
+              <option>Environmental Activities</option>
+              <option>Religious Education Activities</option>
+              <option>Creative Activities</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Book Title</label>
+            <input id="nb-title" type="text" placeholder="e.g. KLB Visionary Mathematics Activities Grade 2">
+          </div>
+          <div class="form-group">
+            <label>Publisher</label>
+            <input id="nb-publisher" type="text" placeholder="e.g. Kenya Literature Bureau (KLB)">
+          </div>
+          <div class="form-group">
+            <label>Resource Link (optional)</label>
+            <input id="nb-link" type="text" placeholder="https://... link to read/download the book">
+          </div>
+          <div id="admin-book-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+          <button onclick="addBook()" style="width:100%;padding:12px;background:var(--admin);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;">Add Book ✓</button>
+          <p style="font-size:12px;color:var(--muted);margin-top:10px;">Books added here immediately appear in the Student "CBC Library" tab. Add a link if you want students to be able to open/read the book directly.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     "MANAGE CHILDREN" MODAL (admin: edit a parent's linked students)
+══════════════════════════════════════════ -->
+<div id="children-modal" style="display:none;position:fixed;inset:0;background:rgba(13,51,32,.55);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:14px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;padding:22px;">
+    <p class="section-title" style="margin-top:0;" id="children-modal-title">🔗 Manage Linked Students</p>
+    <div id="children-modal-list" style="max-height:300px;overflow-y:auto;border:2px solid var(--border);border-radius:8px;padding:10px;margin-bottom:14px;">
+      <div style="color:var(--muted);font-size:13px;">Loading students…</div>
+    </div>
+    <div id="children-modal-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeChildrenModal()" style="flex:1;padding:11px;background:#EEE;border:1px solid var(--border);color:var(--ink);border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;">Cancel</button>
+      <button onclick="saveChildrenModal()" style="flex:1;padding:11px;background:var(--admin);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;">Save Links ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───
+let currentUser = null;
+const tabGroups = {};
+let classesCache = null;   // ['Grade 1A', ...]
+let studentsCache = null;  // [{id, login_id, name, class}, ...]
+
+// ─── API HELPER ───
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  });
+  let data = null;
+  try { data = await res.json(); } catch(e) { /* no body */ }
+  if (!res.ok) {
+    const err = new Error((data && data.error) || `Request failed (${res.status})`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+// ─── LOGIN ───
+// A single form — no role picker. The server looks the ID up across every
+// role and signs the person into whichever dashboard their account belongs to.
+async function doLogin() {
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pass').value.trim();
+  const btn = document.getElementById('login-btn');
+  const errBox = document.getElementById('login-error');
+  errBox.style.display = 'none';
+
+  if (!id || !pw) {
+    errBox.textContent = 'Please enter both your ID and password.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const originalLabel = 'Sign In';
+  btn.innerHTML = '<span class="loader"></span>';
+
+  try {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ id, password: pw })
+    });
+    currentUser = data.user;
+    personalizeDash(currentUser.role, currentUser);
+    document.getElementById('login-id').value = '';
+    document.getElementById('login-pass').value = '';
+    btn.textContent = originalLabel;
+    showDash(currentUser.role);
+  } catch (e) {
+    btn.textContent = originalLabel;
+    errBox.textContent = e.message || 'No account matches that ID and password.';
+    errBox.style.display = 'block';
+  }
+}
+
+// The parent's full list of linked children (from login/me), and which one
+// is currently selected in the "Viewing" picker.
+let parentChildren = [];
+let selectedChildId = null;
+
+function personalizeDash(role, account) {
+  const firstName = account.name.split(' ').filter(w => !/^(Tr\.|Mr\.|Mrs\.|Ms\.)$/.test(w))[0] || account.name;
+
+  if (role === 'student') {
+    const welcomeEl = document.getElementById('student-welcome');
+    if (welcomeEl) welcomeEl.textContent = `Good morning, ${firstName}! 👋`;
+    const badgeEl = document.getElementById('student-class-badge');
+    if (badgeEl) badgeEl.textContent = account.class || 'No class assigned yet';
+    const subtitleEl = document.getElementById('student-subtitle');
+    if (subtitleEl) {
+      const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      subtitleEl.textContent = account.class ? `${today} · ${account.class}` : today;
+    }
+
+  } else if (role === 'teacher') {
+    const welcomeEl = document.getElementById('teacher-welcome');
+    if (welcomeEl) welcomeEl.textContent = `Welcome, ${account.name} 👋`;
+
+    const badgeEl = document.getElementById('teacher-class-badge');
+    const subtitleEl = document.getElementById('teacher-subtitle');
+    const attClassEl = document.getElementById('teacher-attendance-class');
+    const perfClassEl = document.getElementById('teacher-performance-class');
+    const classSizeEl = document.getElementById('teacher-class-size');
+    const noClassNotice = document.getElementById('teacher-no-class-notice');
+    const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    if (account.class) {
+      if (badgeEl) badgeEl.textContent = `${account.class}${account.detail ? ' · ' + account.detail : ' · Class Teacher'}`;
+      if (subtitleEl) subtitleEl.textContent = `${today} · ${account.class} · ${account.classSize ?? 0} learner${account.classSize === 1 ? '' : 's'}`;
+      if (attClassEl) attClassEl.textContent = account.class;
+      if (perfClassEl) perfClassEl.textContent = account.class;
+      if (classSizeEl) classSizeEl.textContent = account.classSize ?? 0;
+      if (noClassNotice) noClassNotice.style.display = 'none';
+    } else {
+      if (badgeEl) badgeEl.textContent = 'No class assigned';
+      if (subtitleEl) subtitleEl.textContent = `${today} · No class assigned yet`;
+      if (attClassEl) attClassEl.textContent = '—';
+      if (perfClassEl) perfClassEl.textContent = 'No class assigned';
+      if (classSizeEl) classSizeEl.textContent = '0';
+      if (noClassNotice) noClassNotice.style.display = 'block';
+    }
+
+  } else if (role === 'parent') {
+    const welcomeEl = document.getElementById('parent-welcome');
+    if (welcomeEl) welcomeEl.textContent = `Welcome, ${account.name} 👋`;
+    parentChildren = account.children || [];
+    selectedChildId = parentChildren.length ? parentChildren[0].id : null;
+    renderParentChildPicker();
+    renderSelectedChild();
+
+  } else if (role === 'admin') {
+    const el = document.getElementById('admin-welcome');
+    if (el) el.textContent = `Welcome, ${account.name} 👋`;
+  }
+}
+
+// Shows/hides the "Viewing" dropdown (only needed when a parent has more
+// than one linked student) and keeps its options in sync with the real
+// linked-children list from the account profile.
+function renderParentChildPicker() {
+  const group = document.getElementById('parent-child-picker-group');
+  const select = document.getElementById('parent-child-picker');
+  if (!group || !select) return;
+
+  if (parentChildren.length > 1) {
+    select.innerHTML = parentChildren.map(c => `<option value="${c.id}">${c.name} (${c.class || 'No class'})</option>`).join('');
+    select.value = selectedChildId;
+    group.style.display = 'block';
+  } else {
+    group.style.display = 'none';
+  }
+}
+
+function onParentChildChange() {
+  const select = document.getElementById('parent-child-picker');
+  selectedChildId = Number(select.value);
+  renderSelectedChild();
+  refreshParentTabs();
+}
+
+// Fills in the child banner + every place in the parent dashboard that
+// names a specific student or their class teacher, using whichever child
+// is currently selected. If no student is linked at all, swaps the whole
+// dashboard body for an empty-state message instead of showing fake data.
+function renderSelectedChild() {
+  const banner = document.getElementById('parent-child-banner');
+  const noChildBanner = document.getElementById('parent-no-child-banner');
+  const tabsWrapper = document.getElementById('parent-tabs-wrapper');
+
+  if (!parentChildren.length) {
+    if (banner) banner.style.display = 'none';
+    if (noChildBanner) noChildBanner.style.display = 'flex';
+    if (tabsWrapper) tabsWrapper.style.display = 'none';
+    return;
+  }
+
+  if (banner) banner.style.display = 'flex';
+  if (noChildBanner) noChildBanner.style.display = 'none';
+  if (tabsWrapper) tabsWrapper.style.display = 'block';
+
+  const child = parentChildren.find(c => c.id === selectedChildId) || parentChildren[0];
+  const teacherName = child.classTeacher || null;
+
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+
+  setText('parent-child-name', child.name);
+  setText('parent-child-class', `${child.class || 'No class assigned yet'}${teacherName ? ' · Class Teacher: ' + teacherName : ''}`);
+  setText('parent-child-adm', `Admission No. ${child.login_id}`);
+  setText('parent-perf-childname', `${child.name.split(' ')[0]}'s`);
+  setText('parent-teacher-signature', teacherName ? `${teacherName}, ${child.class} Class Teacher` : 'Class teacher not yet assigned');
+  setText('parent-msg-teacher-name', teacherName || 'Class Teacher');
+  setText('parent-send-teacher-name', teacherName ? `${teacherName} (${child.class} Class Teacher)` : 'the class teacher — none assigned yet');
+}
+
+function showDash(role) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(role+'-dash').classList.add('active');
+  if (role === 'teacher') {
+    loadTeacherTimetable();
+    loadRegister();
+    loadTeacherMaterials();
+    loadTeacherQuizzes();
+    loadTeacherResults();
+    loadTeacherMessagePicker();
+    loadTodayPresentStat();
+  }
+  if (role === 'student') {
+    loadStudentQuiz();
+    loadStudentLibrary();
+    loadStudentTimetable();
+    loadStudentMaterials();
+    loadStudentAttendance();
+  }
+  if (role === 'parent') {
+    refreshParentTabs();
+  }
+  if (role === 'admin') { renderAccountsTable(); loadLibrary(); loadClasses(); onNewAccountRoleChange(); }
+}
+
+async function logout() {
+  try { await api('/api/auth/logout', { method: 'POST' }); } catch(e) { /* ignore */ }
+  currentUser = null;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('login').classList.add('active');
+  const errBox = document.getElementById('login-error');
+  if (errBox) errBox.style.display = 'none';
+}
+
+// Restore an existing session on page load/refresh (cookie-based)
+async function restoreSession() {
+  try {
+    const data = await api('/api/auth/me');
+    currentUser = data.user;
+    personalizeDash(currentUser.role, currentUser);
+    showDash(currentUser.role);
+  } catch (e) {
+    // no active session — stay on login screen
+  }
+}
+document.addEventListener('DOMContentLoaded', restoreSession);
+
+// ─── ACCOUNTS / LOGIN DIRECTORY (ADMIN ONLY) ───
+function roleMeta(role) {
+  return {
+    student: { label:'Student', icon:'🎒', pill:'pill-blue' },
+    teacher: { label:'Teacher', icon:'👩‍🏫', pill:'pill-green' },
+    parent:  { label:'Parent',  icon:'👨‍👩‍👧', pill:'pill-purple' },
+    admin:   { label:'Admin',   icon:'🛠️', pill:'pill-red' }
+  }[role];
+}
+
+let allAccounts = [];
+
+async function loadAccounts() {
+  const errBox = document.getElementById('admin-users-error');
+  if (errBox) errBox.style.display = 'none';
+  try {
+    const data = await api('/api/admin/users');
+    allAccounts = data.users;
+  } catch (e) {
+    allAccounts = [];
+    if (errBox) {
+      errBox.textContent = e.message || 'Could not load accounts.';
+      errBox.style.display = 'block';
+    }
+  }
+  renderAccountsTable();
+}
+
+function renderAccountsTable() {
+  const body = document.getElementById('accounts-table-body');
+  if (!body) return;
+
+  loadAccountsThenRender();
+
+  function loadAccountsThenRender() {
+    if (!renderAccountsTable._loaded) {
+      renderAccountsTable._loaded = true;
+      loadAccounts();
+      return;
+    }
+    doRender();
+  }
+
+  function doRender() {
+    const counts = { student: 0, teacher: 0, parent: 0, admin: 0 };
+    allAccounts.forEach(u => { counts[u.role] = (counts[u.role] || 0) + 1; });
+    const setCount = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
+    setCount('acc-count-student', counts.student);
+    setCount('acc-count-teacher', counts.teacher);
+    setCount('acc-count-parent', counts.parent);
+    setCount('acc-count-admin', counts.admin);
+    const totalBadge = document.getElementById('acc-total-badge');
+    if (totalBadge) totalBadge.textContent = `${allAccounts.length} accounts`;
+
+    const search = (document.getElementById('acc-search')?.value || '').toLowerCase();
+    const filter = document.getElementById('acc-filter-role')?.value || 'all';
+
+    const rows = allAccounts
+      .filter(u => filter === 'all' || u.role === filter)
+      .filter(u => !search || u.name.toLowerCase().includes(search) || u.login_id.toLowerCase().includes(search))
+      .map(u => {
+        const meta = roleMeta(u.role);
+        const created = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
+
+        let detailsCell = u.detail || '';
+        if (u.role === 'parent') {
+          detailsCell = (u.children && u.children.length)
+            ? `Linked to: ${u.children.map(c => c.name).join(', ')}`
+            : `<span style="color:var(--red);">No students linked yet</span>`;
+        }
+
+        const manageBtn = u.role === 'parent'
+          ? `<button class="logout-btn" style="background:#E8F5E9;border:1px solid #A5D6A7;color:var(--green);padding:5px 10px;font-size:12px;margin-right:6px;" onclick="openChildrenModal(${u.id}, '${u.name.replace(/'/g, "\\'")}')">🔗 Manage</button>`
+          : '';
+
+        return `
+        <tr>
+          <td><span class="pill ${meta.pill}">${meta.icon} ${meta.label}</span></td>
+          <td style="font-weight:700;">${u.login_id}</td>
+          <td>${u.name}</td>
+          <td style="white-space:nowrap;">${u.class || '—'}</td>
+          <td style="color:var(--muted);font-size:13px;">${detailsCell}</td>
+          <td style="color:var(--muted);font-size:12px;">${created}</td>
+          <td style="white-space:nowrap;">${manageBtn}<button class="logout-btn" style="background:#FFEBEE;border:1px solid #FFCDD2;color:var(--red);padding:5px 10px;font-size:12px;" onclick="deleteAccount(${u.id})">Remove</button></td>
+        </tr>`;
+      });
+
+    body.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">No matching accounts.</td></tr>`;
+
+    // Keep the "Parent–Student Links" quick-picker in sync with the directory.
+    const picker = document.getElementById('pl-parent-select');
+    if (picker) {
+      const parents = allAccounts.filter(u => u.role === 'parent');
+      const prevValue = picker.value;
+      picker.innerHTML = '<option value="">— Select a parent —</option>' +
+        parents.map(p => `<option value="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}">${p.name} (${p.login_id})${p.children && p.children.length ? ' — ' + p.children.length + ' linked' : ''}</option>`).join('');
+      if (parents.some(p => String(p.id) === prevValue)) picker.value = prevValue;
+    }
+  }
+}
+
+// Opens the "Manage Links" modal for whichever parent is chosen in the
+// standalone "Parent–Student Links" picker at the top of the admin
+// dashboard, so an admin doesn't have to scroll/search the directory table.
+function openChildrenModalFromPicker() {
+  const picker = document.getElementById('pl-parent-select');
+  const parentId = Number(picker.value);
+  if (!parentId) {
+    alert('Please select a parent account first.');
+    return;
+  }
+  const name = picker.selectedOptions[0].getAttribute('data-name') || 'this parent';
+  openChildrenModal(parentId, name);
+}
+
+// ─── CLASS + PARENT-LINK AWARE ACCOUNT CREATION ───
+
+async function loadClasses() {
+  if (classesCache) return classesCache;
+  try {
+    const data = await api('/api/admin/classes');
+    classesCache = data.classes;
+  } catch (e) {
+    classesCache = [];
+  }
+  const select = document.getElementById('na-class');
+  if (select) {
+    select.innerHTML = '<option value="">— Select a class —</option>' +
+      classesCache.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+  return classesCache;
+}
+
+async function loadStudentsForPicker(forceRefresh) {
+  if (studentsCache && !forceRefresh) return studentsCache;
+  try {
+    const data = await api('/api/admin/students');
+    studentsCache = data.students;
+  } catch (e) {
+    studentsCache = [];
+  }
+  return studentsCache;
+}
+
+// Toggle which extra fields show depending on the selected role, and
+// populate them (classes / student picker) the first time they're needed.
+async function onNewAccountRoleChange() {
+  const role = document.getElementById('na-role').value;
+  const classGroup = document.getElementById('na-class-group');
+  const classLabel = document.getElementById('na-class-label');
+  const subjectGroup = document.getElementById('na-subject-group');
+  const childrenGroup = document.getElementById('na-children-group');
+
+  classGroup.style.display = (role === 'student' || role === 'teacher') ? 'block' : 'none';
+  subjectGroup.style.display = (role === 'teacher') ? 'block' : 'none';
+  childrenGroup.style.display = (role === 'parent') ? 'block' : 'none';
+
+  if (role === 'teacher') classLabel.textContent = 'Class Assigned';
+  if (role === 'student') classLabel.textContent = 'Class';
+
+  if (role === 'student' || role === 'teacher') await loadClasses();
+
+  if (role === 'parent') {
+    const students = await loadStudentsForPicker();
+    renderChildrenChecklist('na-children-list', students, []);
+  }
+}
+
+function renderChildrenChecklist(containerId, students, checkedIds) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!students.length) {
+    container.innerHTML = `<div style="color:var(--muted);font-size:13px;">No student accounts exist yet — create the student(s) first, then link this parent to them.</div>`;
+    return;
+  }
+  const checked = new Set(checkedIds.map(Number));
+  container.innerHTML = students.map(s => `
+    <label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;font-weight:500;cursor:pointer;">
+      <input type="checkbox" value="${s.id}" ${checked.has(s.id) ? 'checked' : ''}>
+      <span>${s.name} <span style="color:var(--muted);">(${s.login_id}${s.class ? ' · ' + s.class : ''})</span></span>
+    </label>
+  `).join('');
+}
+
+function getCheckedIds(containerId) {
+  return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)).map(cb => Number(cb.value));
+}
+
+async function createAccount() {
+  const role = document.getElementById('na-role').value;
+  const name = document.getElementById('na-name').value.trim();
+  const id = document.getElementById('na-id').value.trim();
+  const pass = document.getElementById('na-pass').value.trim();
+  const klass = document.getElementById('na-class').value;
+  const subject = document.getElementById('na-subject').value.trim();
+  const errBox = document.getElementById('admin-create-error');
+  errBox.style.display = 'none';
+
+  if (!name || !id || !pass) {
+    errBox.textContent = 'Please fill in name, login ID, and password.';
+    errBox.style.display = 'block';
+    return;
+  }
+  if (pass.length < 6) {
+    errBox.textContent = 'Password must be at least 6 characters long.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const payload = { role, id, name, password: pass };
+  if (role === 'student') payload.klass = klass;
+  if (role === 'teacher') { payload.klass = klass; payload.detail = subject; }
+  if (role === 'parent') payload.studentIds = getCheckedIds('na-children-list');
+
+  try {
+    await api('/api/admin/users', { method: 'POST', body: JSON.stringify(payload) });
+    document.getElementById('na-name').value = '';
+    document.getElementById('na-id').value = '';
+    document.getElementById('na-pass').value = '';
+    document.getElementById('na-class').value = '';
+    document.getElementById('na-subject').value = '';
+    if (role === 'parent') studentsCache = null; // refresh in case list changed
+    await loadAccounts();
+    alert(`Account created! ${name} can now sign in as ${role} using ID "${id}". ✓`);
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not create account.';
+    errBox.style.display = 'block';
+  }
+}
+
+// ─── "MANAGE CHILDREN" MODAL (edit an existing parent's links) ───
+let childrenModalParentId = null;
+
+async function openChildrenModal(parentId, parentName) {
+  childrenModalParentId = parentId;
+  document.getElementById('children-modal-title').textContent = `🔗 Students Linked to ${parentName}`;
+  document.getElementById('children-modal-error').style.display = 'none';
+  document.getElementById('children-modal').style.display = 'flex';
+  document.getElementById('children-modal-list').innerHTML = '<div style="color:var(--muted);font-size:13px;">Loading students…</div>';
+
+  try {
+    const [students, current] = await Promise.all([
+      loadStudentsForPicker(true),
+      api(`/api/admin/users/${parentId}/children`),
+    ]);
+    renderChildrenChecklist('children-modal-list', students, current.children.map(c => c.id));
+  } catch (e) {
+    document.getElementById('children-modal-error').textContent = e.message || 'Could not load students.';
+    document.getElementById('children-modal-error').style.display = 'block';
+  }
+}
+
+function closeChildrenModal() {
+  document.getElementById('children-modal').style.display = 'none';
+  childrenModalParentId = null;
+}
+
+async function saveChildrenModal() {
+  if (!childrenModalParentId) return;
+  const errBox = document.getElementById('children-modal-error');
+  errBox.style.display = 'none';
+  try {
+    await api(`/api/admin/users/${childrenModalParentId}/children`, {
+      method: 'PUT',
+      body: JSON.stringify({ studentIds: getCheckedIds('children-modal-list') }),
+    });
+    closeChildrenModal();
+    await loadAccounts();
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not save links.';
+    errBox.style.display = 'block';
+  }
+}
+
+async function deleteAccount(userId) {
+  if (!confirm('Remove this account from the login database?')) return;
+  try {
+    await api(`/api/admin/users/${userId}`, { method: 'DELETE' });
+    await loadAccounts();
+  } catch (e) {
+    alert(e.message || 'Could not remove account.');
+  }
+}
+
+// ─── CBC LOWER PRIMARY COURSE BOOK LIBRARY ───
+
+// Admin: browse + manage the catalog
+async function loadLibrary() {
+  const errBox = document.getElementById('admin-library-error');
+  if (errBox) errBox.style.display = 'none';
+  const grade = document.getElementById('lib-filter-grade')?.value || '';
+  const area = document.getElementById('lib-filter-area')?.value || '';
+  const params = new URLSearchParams();
+  if (grade) params.set('grade', grade);
+  if (area) params.set('area', area);
+
+  const body = document.getElementById('library-table-body');
+  try {
+    const data = await api(`/api/books${params.toString() ? '?' + params.toString() : ''}`);
+    const books = data.books;
+    const badge = document.getElementById('lib-total-badge');
+    if (badge) badge.textContent = `${books.length} books`;
+    body.innerHTML = books.length ? books.map(b => `
+      <tr>
+        <td style="white-space:nowrap;">${b.grade}</td>
+        <td style="font-size:13px;">${b.learning_area}</td>
+        <td style="font-weight:700;">${bookTitleHtml(b)}</td>
+        <td style="color:var(--muted);font-size:13px;">${b.publisher || ''}</td>
+        <td><button class="logout-btn" style="background:#FFEBEE;border:1px solid #FFCDD2;color:var(--red);padding:5px 10px;font-size:12px;" onclick="deleteBookAdmin(${b.id})">Remove</button></td>
+      </tr>
+    `).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px;">No matching books.</td></tr>`;
+  } catch (e) {
+    body.innerHTML = '';
+    if (errBox) {
+      errBox.textContent = e.message || 'Could not load the book library.';
+      errBox.style.display = 'block';
+    }
+  }
+}
+
+async function addBook() {
+  const grade = document.getElementById('nb-grade').value;
+  const learningArea = document.getElementById('nb-area').value;
+  const title = document.getElementById('nb-title').value.trim();
+  const publisher = document.getElementById('nb-publisher').value.trim();
+  const link = document.getElementById('nb-link').value.trim();
+  const errBox = document.getElementById('admin-book-error');
+  errBox.style.display = 'none';
+
+  if (!title) {
+    errBox.textContent = 'Please enter the book title.';
+    errBox.style.display = 'block';
+    return;
+  }
+  if (link && !/^https?:\/\//i.test(link)) {
+    errBox.textContent = 'The resource link must start with http:// or https://.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  try {
+    await api('/api/books', {
+      method: 'POST',
+      body: JSON.stringify({ grade, learningArea, title, publisher, link })
+    });
+    document.getElementById('nb-title').value = '';
+    document.getElementById('nb-publisher').value = '';
+    document.getElementById('nb-link').value = '';
+    await loadLibrary();
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not add book.';
+    errBox.style.display = 'block';
+  }
+}
+
+// A book's title, always made clickable so a student can actually get to
+// it: if the admin set a direct resource link, the title opens that (new
+// tab); otherwise it falls back to a web search for the exact title +
+// publisher, so there's always somewhere useful to go instead of a dead
+// title that does nothing when clicked. The fallback is visibly marked as
+// a search (🔎), not a direct copy, since we can't promise a specific free
+// online copy exists for every KICD-approved title.
+function bookTitleHtml(b) {
+  const title = escapeHtml(b.title);
+  if (b.link) {
+    return `<a href="${escapeHtml(b.link)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;" title="Opens the publisher's official site">${title} 🔗</a>`;
+  }
+  const query = encodeURIComponent([b.title, b.publisher].filter(Boolean).join(' '));
+  const searchUrl = `https://www.google.com/search?q=${query}`;
+  return `<a href="${searchUrl}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;" title="No direct link added yet — searching the web for this title">${title} 🔎</a>`;
+}
+
+async function deleteBookAdmin(bookId) {
+  if (!confirm('Remove this book from the library?')) return;
+  try {
+    await api(`/api/books/${bookId}`, { method: 'DELETE' });
+    await loadLibrary();
+  } catch (e) {
+    alert(e.message || 'Could not remove book.');
+  }
+}
+
+// Student: read-only browsing of the same catalog
+async function loadStudentLibrary() {
+  const grade = document.getElementById('s-lib-grade')?.value || '';
+  const area = document.getElementById('s-lib-area')?.value || '';
+  const params = new URLSearchParams();
+  if (grade) params.set('grade', grade);
+  if (area) params.set('area', area);
+
+  const list = document.getElementById('s-library-list');
+  if (!list) return;
+  try {
+    const data = await api(`/api/books${params.toString() ? '?' + params.toString() : ''}`);
+    const books = data.books;
+    const countEl = document.getElementById('s-library-count');
+    if (countEl) countEl.textContent = `${books.length} books`;
+
+    const iconFor = area => ({
+      'English Language Activities': { icon: '📖', bg: '#E3F2FD' },
+      'Kiswahili Language Activities': { icon: '🗣️', bg: '#FCE4EC' },
+      'Mathematical Activities': { icon: '🔢', bg: '#E8F5E9' },
+      'Environmental Activities': { icon: '🌿', bg: '#E0F2F1' },
+      'Religious Education Activities': { icon: '🙏', bg: '#F3E5F5' },
+      'Creative Activities': { icon: '🎨', bg: '#FFF9C4' },
+    }[area] || { icon: '📘', bg: '#EEE' });
+
+    list.innerHTML = books.length ? books.map(b => {
+      const m = iconFor(b.learning_area);
+      return `
+      <div class="lesson-row">
+        <div class="lesson-icon" style="background:${m.bg}">${m.icon}</div>
+        <div class="lesson-info">
+          <div class="lesson-title">${bookTitleHtml(b)}</div>
+          <div class="lesson-meta">${b.learning_area} · ${b.grade}${b.publisher ? ' · ' + b.publisher : ''}</div>
+        </div>
+      </div>`;
+    }).join('') : `<div style="text-align:center;color:var(--muted);padding:20px;">No books match those filters.</div>`;
+  } catch (e) {
+    list.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px;">Could not load the library.</div>`;
+  }
+}
+
+// ─── TABS ───
+function switchTab(group, targetId, btn) {
+  const parent = btn.closest('.app-body') || btn.closest('.screen');
+  const allBtns = btn.closest('.tab-bar').querySelectorAll('.tab-btn');
+  allBtns.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Hide all tab-content siblings in same parent
+  const contents = btn.closest('.screen').querySelectorAll('.tab-content');
+  contents.forEach(c => c.classList.remove('active'));
+  document.getElementById(targetId).classList.add('active');
+}
+
+// ─── SHARED HELPERS ───
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtDate(iso) {
+  try { return new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }); }
+  catch(e) { return iso; }
+}
+// A student card's class → jump straight to the CBC Library tab filtered
+// to that learning area.
+function switchToLibraryArea(area) {
+  const libBtn = Array.from(document.querySelectorAll('#student-dash .tab-btn')).find(b => b.textContent.includes('CBC Library'));
+  if (libBtn) switchTab('s', 's-library', libBtn);
+  const areaSelect = document.getElementById('s-lib-area');
+  if (areaSelect) areaSelect.value = area;
+  loadStudentLibrary();
+}
+
+function renderMaterialsList(containerId, materials, { showDelete } = {}) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = materials.length ? materials.map(m => `
+    <div class="lesson-row">
+      <div class="lesson-icon" style="background:#E3F2FD">📖</div>
+      <div class="lesson-info">
+        <div class="lesson-title">${escapeHtml(m.title)}</div>
+        <div class="lesson-meta">${escapeHtml(m.learning_area)}${m.notes ? ' · ' + escapeHtml(m.notes) : ''}</div>
+      </div>
+      ${showDelete ? `<button class="logout-btn" style="background:#FFEBEE;border:1px solid #FFCDD2;color:var(--red);padding:5px 10px;font-size:12px;" onclick="deleteMaterialItem(${m.id})">Remove</button>` : ''}
+    </div>
+  `).join('') : `<div style="text-align:center;color:var(--muted);padding:20px;">No materials shared yet.</div>`;
+}
+
+function renderTimetableRows(tbodyId, entries, { showDelete } = {}) {
+  const body = document.getElementById(tbodyId);
+  if (!body) return;
+  const colspan = showDelete ? 5 : 4;
+  body.innerHTML = entries.length ? entries.map(e => `
+    <tr>
+      <td>${e.day}</td>
+      <td>${e.start_time}–${e.end_time}</td>
+      <td>${escapeHtml(e.learning_area)}</td>
+      <td>${escapeHtml(e.topic || '—')}</td>
+      ${showDelete ? `<td><button class="logout-btn" style="background:#FFEBEE;border:1px solid #FFCDD2;color:var(--red);padding:4px 10px;font-size:12px;" onclick="deleteTimetablePeriod(${e.id})">Remove</button></td>` : ''}
+    </tr>
+  `).join('') : `<tr><td colspan="${colspan}" style="text-align:center;color:var(--muted);padding:16px;">No timetable has been added yet.</td></tr>`;
+}
+
+function renderMessageThread(containerId, thread, meId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = thread.length ? thread.map(m => `
+    <div class="msg-bubble">
+      <div class="msg-from">${m.from_role === 'teacher' ? '👩‍🏫' : '👨‍👩‍👧'} ${escapeHtml(m.from_name)}${m.from_user_id === meId ? ' (you)' : ''}</div>
+      <div class="msg-text">${escapeHtml(m.body)}</div>
+      <div class="msg-time">${new Date(m.created_at).toLocaleString()}</div>
+    </div>
+  `).join('') : `<div style="text-align:center;color:var(--muted);padding:20px;">No messages yet — start the conversation below.</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ─── TIMETABLE ───
+async function loadStudentTimetable() {
+  if (!currentUser || !currentUser.class) { renderTimetableRows('s-timetable-body', []); return; }
+  try {
+    const data = await api(`/api/timetable?class=${encodeURIComponent(currentUser.class)}`);
+    renderTimetableRows('s-timetable-body', data.entries);
+  } catch (e) { renderTimetableRows('s-timetable-body', []); }
+}
+
+async function loadParentTimetable() {
+  const child = parentChildren.find(c => c.id === selectedChildId);
+  const nameEl = document.getElementById('parent-tt-childname');
+  if (nameEl) nameEl.textContent = child ? `${child.name.split(' ')[0]}'s` : "This student's";
+  if (!child || !child.class) { renderTimetableRows('p-timetable-body', []); return; }
+  try {
+    const data = await api(`/api/timetable?class=${encodeURIComponent(child.class)}`);
+    renderTimetableRows('p-timetable-body', data.entries);
+  } catch (e) { renderTimetableRows('p-timetable-body', []); }
+}
+
+async function loadTeacherTimetable() {
+  if (!currentUser || !currentUser.class) {
+    renderTimetableRows('t-timetable-body', [], { showDelete: true });
+    const c = document.getElementById('t-timetable-count'); if (c) c.textContent = '0 periods';
+    return;
+  }
+  try {
+    const data = await api(`/api/timetable?class=${encodeURIComponent(currentUser.class)}`);
+    renderTimetableRows('t-timetable-body', data.entries, { showDelete: true });
+    const c = document.getElementById('t-timetable-count');
+    if (c) c.textContent = `${data.entries.length} period${data.entries.length === 1 ? '' : 's'}`;
+  } catch (e) {
+    renderTimetableRows('t-timetable-body', [], { showDelete: true });
+  }
+}
+
+async function addTimetablePeriod() {
+  const errBox = document.getElementById('tt-error');
+  errBox.style.display = 'none';
+  if (!currentUser.class) {
+    errBox.textContent = 'You have no class assigned yet — ask the school administrator to assign you one.';
+    errBox.style.display = 'block';
+    return;
+  }
+  const day = document.getElementById('tt-day').value;
+  const startTime = document.getElementById('tt-start').value;
+  const endTime = document.getElementById('tt-end').value;
+  const learningArea = document.getElementById('tt-area').value;
+  const topic = document.getElementById('tt-topic').value.trim();
+  if (!startTime || !endTime) {
+    errBox.textContent = 'Start and end time are required.';
+    errBox.style.display = 'block';
+    return;
+  }
+  try {
+    await api('/api/timetable', {
+      method: 'POST',
+      body: JSON.stringify({ class: currentUser.class, day, startTime, endTime, learningArea, topic })
+    });
+    document.getElementById('tt-topic').value = '';
+    await loadTeacherTimetable();
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not add this period.';
+    errBox.style.display = 'block';
+  }
+}
+
+async function deleteTimetablePeriod(id) {
+  if (!confirm('Remove this period from the timetable?')) return;
+  try {
+    await api(`/api/timetable/${id}`, { method: 'DELETE' });
+    await loadTeacherTimetable();
+  } catch (e) {
+    alert(e.message || 'Could not remove this period.');
+  }
+}
+
+// ─── MATERIALS ───
+async function loadStudentMaterials() {
+  if (!currentUser || !currentUser.class) {
+    renderMaterialsList('s-subjects-materials', []);
+    renderMaterialsList('s-lessons-materials', []);
+    return;
+  }
+  try {
+    const data = await api(`/api/materials?class=${encodeURIComponent(currentUser.class)}`);
+    renderMaterialsList('s-subjects-materials', data.materials);
+    renderMaterialsList('s-lessons-materials', data.materials);
+    const teacherEl = document.getElementById('s-subjects-teacher');
+    if (teacherEl && currentUser.classTeacher) teacherEl.textContent = currentUser.classTeacher.name;
+    const countEl = document.getElementById('s-subjects-material-count');
+    if (countEl) countEl.textContent = data.materials.length;
+    const statEl = document.getElementById('s-materials-count-stat');
+    if (statEl) statEl.textContent = data.materials.length;
+  } catch (e) {
+    renderMaterialsList('s-subjects-materials', []);
+    renderMaterialsList('s-lessons-materials', []);
+  }
+}
+
+async function loadParentMaterials() {
+  const child = parentChildren.find(c => c.id === selectedChildId);
+  const teacherEl = document.getElementById('parent-materials-teacher');
+  if (teacherEl) teacherEl.textContent = (child && child.classTeacher) ? child.classTeacher : 'the Class Teacher';
+  if (!child || !child.class) {
+    renderMaterialsList('p-materials-list', []);
+    const c = document.getElementById('p-materials-count'); if (c) c.textContent = '0';
+    const s = document.getElementById('parent-stat-materials'); if (s) s.textContent = '0';
+    return;
+  }
+  try {
+    const data = await api(`/api/materials?class=${encodeURIComponent(child.class)}`);
+    renderMaterialsList('p-materials-list', data.materials);
+    const c = document.getElementById('p-materials-count'); if (c) c.textContent = data.materials.length;
+    const s = document.getElementById('parent-stat-materials'); if (s) s.textContent = data.materials.length;
+  } catch (e) {
+    renderMaterialsList('p-materials-list', []);
+  }
+}
+
+async function loadTeacherMaterials() {
+  if (!currentUser || !currentUser.class) {
+    renderMaterialsList('t-materials-list', [], { showDelete: true });
+    return;
+  }
+  try {
+    const data = await api(`/api/materials?class=${encodeURIComponent(currentUser.class)}`);
+    renderMaterialsList('t-materials-list', data.materials, { showDelete: true });
+    const badge = document.getElementById('t-materials-count-badge'); if (badge) badge.textContent = data.materials.length;
+    const stat = document.getElementById('teacher-materials-count'); if (stat) stat.textContent = data.materials.length;
+  } catch (e) {
+    renderMaterialsList('t-materials-list', [], { showDelete: true });
+  }
+}
+
+async function addMaterial() {
+  const errBox = document.getElementById('mt-error');
+  errBox.style.display = 'none';
+  if (!currentUser.class) {
+    errBox.textContent = 'You have no class assigned yet — ask the school administrator to assign you one.';
+    errBox.style.display = 'block';
+    return;
+  }
+  const learningArea = document.getElementById('mt-area').value;
+  const title = document.getElementById('mt-title').value.trim();
+  const notes = document.getElementById('mt-notes').value.trim();
+  if (!title) {
+    errBox.textContent = 'Please enter a title.';
+    errBox.style.display = 'block';
+    return;
+  }
+  try {
+    await api('/api/materials', {
+      method: 'POST',
+      body: JSON.stringify({ class: currentUser.class, learningArea, title, notes })
+    });
+    document.getElementById('mt-title').value = '';
+    document.getElementById('mt-notes').value = '';
+    await loadTeacherMaterials();
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not share this material.';
+    errBox.style.display = 'block';
+  }
+}
+
+async function deleteMaterialItem(id) {
+  if (!confirm('Remove this material from the class?')) return;
+  try {
+    await api(`/api/materials/${id}`, { method: 'DELETE' });
+    await loadTeacherMaterials();
+  } catch (e) {
+    alert(e.message || 'Could not remove this material.');
+  }
+}
+
+// ─── ATTENDANCE / CLASS REGISTER ───
+let registerRoster = []; // [{studentId, loginId, name, status}]
+
+async function loadRegister() {
+  const dateInput = document.getElementById('register-date');
+  if (dateInput && !dateInput.value) dateInput.value = todayISO();
+  const date = dateInput ? dateInput.value : todayISO();
+  const errBox = document.getElementById('register-error');
+  if (errBox) errBox.style.display = 'none';
+
+  if (!currentUser.class) {
+    registerRoster = [];
+    renderRegisterGrid();
+    return;
+  }
+  try {
+    const data = await api(`/api/attendance/register?class=${encodeURIComponent(currentUser.class)}&date=${date}`);
+    registerRoster = data.roster.map(r => ({ ...r, status: r.status || 'present' }));
+    renderRegisterGrid();
+  } catch (e) {
+    registerRoster = [];
+    renderRegisterGrid();
+    if (errBox) { errBox.textContent = e.message || 'Could not load the register.'; errBox.style.display = 'block'; }
+  }
+}
+
+function renderRegisterGrid() {
+  const g = document.getElementById('attend-grid');
+  if (!g) return;
+  if (!registerRoster.length) {
+    g.innerHTML = `<div style="color:var(--muted);padding:16px;">No students are assigned to your class yet.</div>`;
+    updateAttCount();
+    return;
+  }
+  const icons = { present: '🟢', absent: '🔴', late: '🟡' };
+  g.innerHTML = registerRoster.map(s => `
+    <div class="attend-card ${s.status}" id="acard-${s.studentId}">
+      <div>${icons[s.status]}</div>
+      <div class="att-name">${escapeHtml(s.name)}</div>
+      <div class="att-class">${escapeHtml(s.loginId)}</div>
+      <div class="att-status-row">
+        <button class="att-status-btn present ${s.status === 'present' ? 'active' : ''}" onclick="markStudent(${s.studentId}, 'present')" title="Mark Present">P</button>
+        <button class="att-status-btn absent ${s.status === 'absent' ? 'active' : ''}" onclick="markStudent(${s.studentId}, 'absent')" title="Mark Absent">A</button>
+        <button class="att-status-btn late ${s.status === 'late' ? 'active' : ''}" onclick="markStudent(${s.studentId}, 'late')" title="Mark Late">L</button>
+      </div>
+    </div>
+  `).join('');
+  updateAttCount();
+}
+
+// Marks one individual student's status directly — a teacher can set any
+// student to Present, Absent or Late independently of the rest of the
+// class, without having to cycle through the other states first.
+function markStudent(studentId, status) {
+  const s = registerRoster.find(r => r.studentId === studentId);
+  if (!s) return;
+  s.status = status;
+  renderRegisterGrid();
+}
+
+// Kept for backward compatibility with anything still calling the old
+// cycling toggle; markStudent() above is the direct per-student control.
+function toggleAtt(studentId) {
+  const s = registerRoster.find(r => r.studentId === studentId);
+  if (!s) return;
+  s.status = s.status === 'present' ? 'absent' : s.status === 'absent' ? 'late' : 'present';
+  renderRegisterGrid();
+}
+
+function markAll(status) {
+  registerRoster.forEach(s => s.status = status);
+  renderRegisterGrid();
+}
+
+function updateAttCount() {
+  const present = registerRoster.filter(s => s.status === 'present').length;
+  const el = document.getElementById('att-count');
+  if (el) el.textContent = `${present}/${registerRoster.length} present`;
+}
+
+async function saveRegister() {
+  const errBox = document.getElementById('register-error');
+  errBox.style.display = 'none';
+  const date = document.getElementById('register-date').value || todayISO();
+  if (!registerRoster.length) return;
+  try {
+    const data = await api('/api/attendance/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        class: currentUser.class,
+        date,
+        entries: registerRoster.map(s => ({ studentId: s.studentId, status: s.status })),
+      })
+    });
+    const stat = document.getElementById('teacher-present-today');
+    if (stat && date === todayISO()) stat.textContent = data.counts.present;
+    alert('Register saved ✓');
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not save the register.';
+    errBox.style.display = 'block';
+  }
+}
+
+async function loadTodayPresentStat() {
+  if (!currentUser.class) return;
+  try {
+    const data = await api(`/api/attendance/register?class=${encodeURIComponent(currentUser.class)}&date=${todayISO()}`);
+    const stat = document.getElementById('teacher-present-today');
+    if (stat) stat.textContent = data.counts.present;
+  } catch (e) { /* ignore */ }
+}
+
+async function loadStudentAttendance() {
+  try {
+    const data = await api(`/api/attendance/student/${currentUser.id}`);
+    renderAttendanceSummary(data, { rateStatId: 's-att-rate-stat', pillId: 's-att-rate-pill', barId: 's-att-rate-bar', summaryId: 's-att-summary', historyId: 's-att-history' });
+  } catch (e) { /* ignore */ }
+}
+
+async function loadParentAttendance() {
+  const child = parentChildren.find(c => c.id === selectedChildId);
+  if (!child) return;
+  try {
+    const data = await api(`/api/attendance/student/${child.id}`);
+    const setText = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+    setText('p-att-present', data.present);
+    setText('p-att-absent', data.absent);
+    setText('p-att-rate', data.rate === null ? '—' : `${data.rate}%`);
+    setText('parent-banner-att-rate', data.rate === null ? '—' : `${data.rate}%`);
+    setText('parent-stat-present', data.present);
+    setText('parent-stat-rate', data.rate === null ? '—' : `${data.rate}%`);
+    const body = document.getElementById('p-att-history');
+    if (body) {
+      body.innerHTML = data.history.length ? data.history.map(h => `
+        <tr><td>${fmtDate(h.date)}</td><td><span class="pill ${h.status === 'present' ? 'pill-green' : h.status === 'late' ? 'pill-gold' : 'pill-red'}">${h.status[0].toUpperCase()+h.status.slice(1)}</span></td></tr>
+      `).join('') : `<tr><td colspan="2" style="text-align:center;color:var(--muted);padding:16px;">No attendance has been recorded yet.</td></tr>`;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function renderAttendanceSummary(data, ids) {
+  const rateEl = document.getElementById(ids.rateStatId);
+  if (rateEl) rateEl.textContent = data.rate === null ? '—' : `${data.rate}%`;
+  const pillEl = document.getElementById(ids.pillId);
+  if (pillEl) pillEl.textContent = data.rate === null ? '—' : `${data.rate}%`;
+  const barEl = document.getElementById(ids.barId);
+  if (barEl) barEl.style.width = `${data.rate || 0}%`;
+  const summaryEl = document.getElementById(ids.summaryId);
+  if (summaryEl) {
+    summaryEl.textContent = data.total
+      ? `${data.present} present, ${data.absent} absent, ${data.late} late — out of ${data.total} recorded day${data.total===1?'':'s'}.`
+      : 'No attendance has been recorded for you yet.';
+  }
+  const historyEl = document.getElementById(ids.historyId);
+  if (historyEl) {
+    historyEl.innerHTML = data.history.length ? data.history.map(h => `
+      <tr><td>${fmtDate(h.date)}</td><td><span class="pill ${h.status === 'present' ? 'pill-green' : h.status === 'late' ? 'pill-gold' : 'pill-red'}">${h.status[0].toUpperCase()+h.status.slice(1)}</span></td></tr>
+    `).join('') : `<tr><td colspan="2" style="text-align:center;color:var(--muted);padding:16px;">No attendance recorded yet.</td></tr>`;
+  }
+}
+
+async function loadTeacherResults() {
+  const body = document.getElementById('t-results-body');
+  if (!body) return;
+  if (!currentUser.class || !registerRoster.length) {
+    // Make sure we have a roster even if the Attendance tab hasn't loaded yet
+    if (currentUser.class) {
+      try {
+        const data = await api(`/api/attendance/register?class=${encodeURIComponent(currentUser.class)}&date=${todayISO()}`);
+        registerRoster = data.roster.map(r => ({ ...r, status: r.status || 'present' }));
+      } catch (e) { /* ignore */ }
+    }
+  }
+  if (!registerRoster.length) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px;">No students are assigned to your class yet.</td></tr>`;
+    return;
+  }
+  try {
+    const rows = await Promise.all(registerRoster.map(async s => {
+      try {
+        const d = await api(`/api/attendance/student/${s.studentId}`);
+        return `<tr><td>${escapeHtml(s.name)}</td><td>${d.present}</td><td>${d.absent}</td><td>${d.late}</td><td>${d.rate === null ? '—' : d.rate + '%'}</td></tr>`;
+      } catch (e) {
+        return `<tr><td>${escapeHtml(s.name)}</td><td colspan="4" style="color:var(--muted);">Unavailable</td></tr>`;
+      }
+    }));
+    body.innerHTML = rows.join('');
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px;">Could not load attendance summary.</td></tr>`;
+  }
+}
+
+// ─── QUIZZES ───
+let studentQuizzes = [];
+let studentQuizIdx = 0;
+let studentScore = 0;
+
+async function loadStudentQuiz() {
+  if (!currentUser || !currentUser.class) {
+    studentQuizzes = [];
+    renderStudentQuiz();
+    return;
+  }
+  try {
+    const data = await api(`/api/quizzes?class=${encodeURIComponent(currentUser.class)}`);
+    studentQuizzes = data.quizzes;
+    studentQuizIdx = 0;
+    studentScore = 0;
+    const countEl = document.getElementById('s-quiz-count');
+    if (countEl) countEl.textContent = `${studentQuizzes.length} question${studentQuizzes.length===1?'':'s'}`;
+    const statEl = document.getElementById('s-quiz-count-stat');
+    if (statEl) statEl.textContent = studentQuizzes.length;
+    renderStudentQuiz();
+  } catch (e) {
+    studentQuizzes = [];
+    renderStudentQuiz();
+  }
+}
+
+function renderStudentQuiz() {
+  const c = document.getElementById('quiz-container');
+  if (!c) return;
+  if (!studentQuizzes.length) {
+    c.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;">Your teacher hasn't added any quiz questions for your class yet — check back soon!</div>`;
+    return;
+  }
+  const q = studentQuizzes[studentQuizIdx];
+
+  if (q.type === 'unstructured') {
+    const already = q.myResponse != null;
+    c.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <span style="font-size:13px;font-weight:700;color:var(--muted)">Question ${studentQuizIdx+1} of ${studentQuizzes.length} · ${escapeHtml(q.learning_area)}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green)">⭐ Score: ${studentScore}</span>
+      </div>
+      <div class="quiz-question">${escapeHtml(q.question)}</div>
+      <p style="font-size:12px;color:var(--muted);margin:4px 0 10px;">✍️ Open-ended question — write your own answer. Your teacher will read it; there's no automatic right/wrong here.</p>
+      <textarea id="quiz-open-answer" placeholder="Type your answer..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;min-height:90px;outline:none;margin-bottom:10px;">${escapeHtml(q.myResponse || '')}</textarea>
+      <button id="quiz-open-submit" onclick="submitOpenAnswer()" style="width:100%;padding:11px;background:var(--student);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">${already ? 'Update My Answer ✓' : 'Submit Answer ✓'}</button>
+      <div id="quiz-fb"></div>
+    `;
+    return;
+  }
+
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:13px;font-weight:700;color:var(--muted)">Question ${studentQuizIdx+1} of ${studentQuizzes.length} · ${escapeHtml(q.learning_area)}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--green)">⭐ Score: ${studentScore}</span>
+    </div>
+    <div class="quiz-question">${escapeHtml(q.question)}</div>
+    <div class="quiz-options">
+      ${[q.option_a, q.option_b, q.option_c, q.option_d].map((o,i)=>`<button class="quiz-opt" onclick="checkAns(${i})">${String.fromCharCode(65+i)}. ${escapeHtml(o)}</button>`).join('')}
+    </div>
+    <div id="quiz-fb"></div>
+  `;
+}
+
+async function submitOpenAnswer() {
+  const q = studentQuizzes[studentQuizIdx];
+  const textarea = document.getElementById('quiz-open-answer');
+  const btn = document.getElementById('quiz-open-submit');
+  const fb = document.getElementById('quiz-fb');
+  const answerText = textarea.value.trim();
+  if (!answerText) {
+    fb.className = 'quiz-feedback wrong';
+    fb.textContent = 'Please write an answer before submitting.';
+    return;
+  }
+  btn.disabled = true;
+  try {
+    await api(`/api/quizzes/${q.id}/answer`, { method: 'POST', body: JSON.stringify({ answerText }) });
+    fb.className = 'quiz-feedback correct';
+    fb.textContent = '✅ Answer submitted — your teacher will read it.';
+  } catch (e) {
+    fb.className = 'quiz-feedback wrong';
+    fb.textContent = e.message || 'Could not submit your answer — please try again.';
+    btn.disabled = false;
+    return;
+  }
+  setTimeout(() => {
+    studentQuizIdx = (studentQuizIdx + 1) % studentQuizzes.length;
+    renderStudentQuiz();
+  }, 1200);
+}
+
+async function checkAns(i) {
+  const q = studentQuizzes[studentQuizIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.disabled = true);
+  const fb = document.getElementById('quiz-fb');
+  try {
+    const result = await api(`/api/quizzes/${q.id}/answer`, { method: 'POST', body: JSON.stringify({ selectedIndex: i }) });
+    if (result.correct) {
+      opts[i].classList.add('correct');
+      studentScore++;
+      fb.className = 'quiz-feedback correct';
+      fb.textContent = '✅ Correct! Well done!';
+    } else {
+      opts[i].classList.add('wrong');
+      opts[result.correctIndex].classList.add('correct');
+      const correctText = [q.option_a, q.option_b, q.option_c, q.option_d][result.correctIndex];
+      fb.className = 'quiz-feedback wrong';
+      fb.textContent = `❌ The correct answer is: ${String.fromCharCode(65+result.correctIndex)}. ${correctText}`;
+    }
+  } catch (e) {
+    fb.className = 'quiz-feedback wrong';
+    fb.textContent = 'Could not check your answer — please try again.';
+  }
+  setTimeout(() => {
+    studentQuizIdx = (studentQuizIdx + 1) % studentQuizzes.length;
+    renderStudentQuiz();
+  }, 2000);
+}
+
+async function loadTeacherQuizzes() {
+  const list = document.getElementById('quiz-manage-list');
+  if (!currentUser.class) {
+    if (list) list.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px;">You have no class assigned yet.</div>`;
+    return;
+  }
+  try {
+    const data = await api(`/api/quizzes?class=${encodeURIComponent(currentUser.class)}`);
+    const count = document.getElementById('quiz-bank-count');
+    if (count) count.textContent = `${data.quizzes.length} question${data.quizzes.length===1?'':'s'}`;
+    const stat = document.getElementById('teacher-quiz-count');
+    if (stat) stat.textContent = data.quizzes.length;
+    if (list) {
+      list.innerHTML = data.quizzes.length ? data.quizzes.map(q => {
+        const isUnstructured = q.type === 'unstructured';
+        const meta = isUnstructured
+          ? `${escapeHtml(q.learning_area)} · <span class="pill pill-blue">Unstructured</span>`
+          : `${escapeHtml(q.learning_area)} · Correct: ${String.fromCharCode(65+q.correct_index)}. ${escapeHtml([q.option_a,q.option_b,q.option_c,q.option_d][q.correct_index])}`;
+        return `
+        <div class="lesson-row" style="align-items:flex-start;">
+          <div class="lesson-icon" style="background:${isUnstructured ? '#E3F2FD' : '#E8F5E9'}">${isUnstructured ? '✍️' : '🧠'}</div>
+          <div class="lesson-info">
+            <div class="lesson-title">${escapeHtml(q.question)}</div>
+            <div class="lesson-meta">${meta}</div>
+            ${isUnstructured ? `<div id="responses-${q.id}" style="display:none;margin-top:10px;"></div>
+            <button class="logout-btn" style="background:#E3F2FD;border:1px solid #BBDEFB;color:var(--student);margin-top:8px;padding:5px 10px;font-size:12px;" onclick="toggleResponses(${q.id})">👀 View Responses</button>` : ''}
+          </div>
+          <button class="logout-btn" style="background:#FFEBEE;border:1px solid #FFCDD2;color:var(--red)" onclick="deleteQuizQuestion(${q.id})">Delete</button>
+        </div>
+      `;
+      }).join('') : `<div style="text-align:center;color:var(--muted);padding:20px;">No quiz questions yet — add one on the left.</div>`;
+    }
+  } catch (e) {
+    if (list) list.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px;">Could not load the quiz bank.</div>`;
+  }
+}
+
+// Toggles an inline panel of every student's free-text answer to one
+// unstructured question, fetched on first open.
+async function toggleResponses(questionId) {
+  const box = document.getElementById(`responses-${questionId}`);
+  if (!box) return;
+  if (box.style.display === 'block') {
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+  box.innerHTML = `<div style="color:var(--muted);font-size:12px;">Loading responses…</div>`;
+  try {
+    const data = await api(`/api/quizzes/${questionId}/responses`);
+    box.innerHTML = data.responses.length
+      ? `<div style="background:#F7F7F7;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;">` +
+        data.responses.map(r => `
+          <div style="font-size:13px;">
+            <strong>${escapeHtml(r.student_name)}</strong> <span style="color:var(--muted);font-size:11px;">(${escapeHtml(r.student_login_id)})</span>
+            <div style="color:var(--ink);margin-top:2px;">${escapeHtml(r.answer_text)}</div>
+          </div>
+        `).join('') + `</div>`
+      : `<div style="color:var(--muted);font-size:12px;">No students have answered this yet.</div>`;
+  } catch (e) {
+    box.innerHTML = `<div style="color:var(--red);font-size:12px;">${escapeHtml(e.message || 'Could not load responses.')}</div>`;
+  }
+}
+
+// Shows/hides the multiple-choice fields depending on the chosen question
+// type — an unstructured question has nothing for the system to mark, so
+// there's no options/correct-answer to collect.
+function onQuizTypeChange() {
+  const isUnstructured = document.getElementById('nq-type').value === 'unstructured';
+  document.getElementById('nq-options-group').style.display = isUnstructured ? 'none' : 'block';
+  document.getElementById('nq-unstructured-hint').style.display = isUnstructured ? 'block' : 'none';
+}
+
+async function addQuiz() {
+  const errBox = document.getElementById('nq-error');
+  errBox.style.display = 'none';
+  if (!currentUser.class) {
+    errBox.textContent = 'You have no class assigned yet — ask the school administrator to assign you one.';
+    errBox.style.display = 'block';
+    return;
+  }
+  const type = document.getElementById('nq-type').value;
+  const learningArea = document.getElementById('nq-area').value;
+  const question = document.getElementById('nq-question').value.trim();
+
+  if (!question) {
+    errBox.textContent = 'Please write a question.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const payload = { class: currentUser.class, learningArea, type, question };
+
+  if (type === 'unstructured') {
+    try {
+      await api('/api/quizzes', { method: 'POST', body: JSON.stringify(payload) });
+      document.getElementById('nq-question').value = '';
+      await loadTeacherQuizzes();
+    } catch (e) {
+      errBox.textContent = e.message || 'Could not add this quiz question.';
+      errBox.style.display = 'block';
+    }
+    return;
+  }
+
+  const optionA = document.getElementById('nq-opt1').value.trim();
+  const optionB = document.getElementById('nq-opt2').value.trim();
+  const optionC = document.getElementById('nq-opt3').value.trim();
+  const optionD = document.getElementById('nq-opt4').value.trim();
+  const correctIndex = parseInt(document.getElementById('nq-correct').value, 10);
+
+  if (!optionA || !optionB || !optionC || !optionD) {
+    errBox.textContent = 'Please fill in the question and all four options.';
+    errBox.style.display = 'block';
+    return;
+  }
+  try {
+    await api('/api/quizzes', {
+      method: 'POST',
+      body: JSON.stringify({ ...payload, optionA, optionB, optionC, optionD, correctIndex })
+    });
+    document.getElementById('nq-question').value = '';
+    document.getElementById('nq-opt1').value = '';
+    document.getElementById('nq-opt2').value = '';
+    document.getElementById('nq-opt3').value = '';
+    document.getElementById('nq-opt4').value = '';
+    document.getElementById('nq-correct').value = '0';
+    await loadTeacherQuizzes();
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not add this quiz question.';
+    errBox.style.display = 'block';
+  }
+}
+
+async function deleteQuizQuestion(id) {
+  if (!confirm('Remove this quiz question?')) return;
+  try {
+    await api(`/api/quizzes/${id}`, { method: 'DELETE' });
+    await loadTeacherQuizzes();
+  } catch (e) {
+    alert(e.message || 'Could not remove this question.');
+  }
+}
+
+// ─── MESSAGES ───
+
+// Teacher: populate the "select a student" dropdown from today's register
+// (their real class roster), then load/send messages for whichever one
+// is selected.
+async function loadTeacherMessagePicker() {
+  const select = document.getElementById('t-msg-student');
+  if (!select) return;
+  if (!currentUser.class) {
+    select.innerHTML = '<option value="">No class assigned</option>';
+    return;
+  }
+  try {
+    const data = await api(`/api/attendance/register?class=${encodeURIComponent(currentUser.class)}&date=${todayISO()}`);
+    if (!data.roster.length) {
+      select.innerHTML = '<option value="">No students in your class yet</option>';
+      return;
+    }
+    select.innerHTML = data.roster.map(s => `<option value="${s.studentId}">${escapeHtml(s.name)} (${escapeHtml(s.loginId)})</option>`).join('');
+    await loadTeacherThread();
+  } catch (e) {
+    select.innerHTML = '<option value="">Could not load students</option>';
+  }
+}
+
+async function loadTeacherThread() {
+  const select = document.getElementById('t-msg-student');
+  const studentId = select && select.value ? Number(select.value) : null;
+  const nameEl = document.getElementById('t-msg-student-name');
+  if (nameEl) nameEl.textContent = select && select.selectedOptions[0] ? select.selectedOptions[0].textContent : 'a student';
+  if (!studentId) {
+    renderMessageThread('t-msg-thread', []);
+    return;
+  }
+  try {
+    const data = await api(`/api/messages/${studentId}`);
+    renderMessageThread('t-msg-thread', data.thread, currentUser.id);
+  } catch (e) {
+    renderMessageThread('t-msg-thread', []);
+  }
+}
+
+async function sendTeacherMessage() {
+  const select = document.getElementById('t-msg-student');
+  const studentId = select && select.value ? Number(select.value) : null;
+  const errBox = document.getElementById('t-msg-error');
+  errBox.style.display = 'none';
+  const body = document.getElementById('t-msg-body').value.trim();
+  if (!studentId) {
+    errBox.textContent = 'Please select a student first.';
+    errBox.style.display = 'block';
+    return;
+  }
+  if (!body) {
+    errBox.textContent = 'Message cannot be empty.';
+    errBox.style.display = 'block';
+    return;
+  }
+  try {
+    await api('/api/messages', { method: 'POST', body: JSON.stringify({ studentId, body }) });
+    document.getElementById('t-msg-body').value = '';
+    await loadTeacherThread();
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not send message.';
+    errBox.style.display = 'block';
+  }
+}
+
+// Parent: thread is always about the currently-selected child.
+async function loadParentThread() {
+  const child = parentChildren.find(c => c.id === selectedChildId);
+  if (!child) return;
+  try {
+    const data = await api(`/api/messages/${child.id}`);
+    renderMessageThread('p-msg-thread', data.thread, currentUser.id);
+    const stat = document.getElementById('parent-stat-messages');
+    if (stat) stat.textContent = data.thread.length;
+  } catch (e) {
+    renderMessageThread('p-msg-thread', []);
+  }
+}
+
+async function sendMessageToTeacher() {
+  const child = parentChildren.find(c => c.id === selectedChildId);
+  const errBox = document.getElementById('parent-msg-error');
+  errBox.style.display = 'none';
+  const body = document.getElementById('parent-msg').value.trim();
+  if (!child) return;
+  if (!child.classTeacher) {
+    errBox.textContent = 'This student has no class teacher assigned yet, so there is no one to send the message to.';
+    errBox.style.display = 'block';
+    return;
+  }
+  if (!body) {
+    errBox.textContent = 'Message cannot be empty.';
+    errBox.style.display = 'block';
+    return;
+  }
+  try {
+    await api('/api/messages', { method: 'POST', body: JSON.stringify({ studentId: child.id, body }) });
+    document.getElementById('parent-msg').value = '';
+    await loadParentThread();
+  } catch (e) {
+    errBox.textContent = e.message || 'Could not send message.';
+    errBox.style.display = 'block';
+  }
+}
+
+// Refreshes every tab of the parent dashboard for whichever child is
+// currently selected — called on login and whenever the "Viewing" picker
+// changes, so switching child never leaves a stale tab showing.
+function refreshParentTabs() {
+  if (!parentChildren.length) return;
+  loadParentTimetable();
+  loadParentAttendance();
+  loadParentMaterials();
+  loadParentThread();
+  const teacherNameEl = document.getElementById('parent-msg-thread-teacher');
+  const child = parentChildren.find(c => c.id === selectedChildId);
+  if (teacherNameEl) teacherNameEl.textContent = (child && child.classTeacher) || 'the Class Teacher';
+}
+
+// ─── OFFLINE DETECTION ───
+window.addEventListener('offline',()=>document.getElementById('offline-bar').classList.add('show'));
+window.addEventListener('online',()=>document.getElementById('offline-bar').classList.remove('show'));
+
+// Enter key on login
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && document.getElementById('login').classList.contains('active')) doLogin();
+});
+</script>
+</body>
+</html>
