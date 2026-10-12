@@ -10,6 +10,7 @@ const {
   CLASSES,
 } = require('../db');
 const { requireRole } = require('../middleware/auth');
+const asyncHandler = require('../middleware/asyncHandler');
 
 const router = express.Router();
 const ROLES = ['student', 'teacher', 'parent', 'admin'];
@@ -25,21 +26,21 @@ router.get('/classes', (req, res) => {
 
 // GET /api/admin/users — list every account. Parent rows include a
 // `children` array (their currently linked student accounts).
-router.get('/users', (req, res) => {
-  res.json({ users: listUsers() });
-});
+router.get('/users', asyncHandler(async (req, res) => {
+  res.json({ users: await listUsers() });
+}));
 
 // GET /api/admin/students — lightweight list of student accounts, used to
 // populate the "link to student(s)" picker when creating/editing a parent.
-router.get('/students', (req, res) => {
-  res.json({ students: listUsersByRole('student') });
-});
+router.get('/students', asyncHandler(async (req, res) => {
+  res.json({ students: await listUsersByRole('student') });
+}));
 
 // POST /api/admin/users — create a new account (any role, including admin)
 //   - student / teacher: optional `klass` assigns them to one of CLASSES
 //   - parent: optional `studentIds` (array) links them to one or more
 //     existing student accounts in the same request
-router.post('/users', (req, res) => {
+router.post('/users', asyncHandler(async (req, res) => {
   const { role, id, name, password, klass, detail, studentIds } = req.body || {};
 
   if (!role || !ROLES.includes(role)) {
@@ -56,7 +57,7 @@ router.post('/users', (req, res) => {
   }
 
   try {
-    const user = createUser({
+    const user = await createUser({
       role,
       loginId: String(id).trim(),
       name: String(name).trim(),
@@ -68,8 +69,8 @@ router.post('/users', (req, res) => {
 
     let children = [];
     if (role === 'parent' && Array.isArray(studentIds) && studentIds.length) {
-      setParentChildren(user.id, studentIds);
-      children = getChildrenOfParent(user.id);
+      await setParentChildren(user.id, studentIds);
+      children = await getChildrenOfParent(user.id);
     }
 
     res.status(201).json({
@@ -82,48 +83,48 @@ router.post('/users', (req, res) => {
     console.error(e);
     res.status(500).json({ error: 'Could not create account.' });
   }
-});
+}));
 
 // GET /api/admin/users/:id/children — a parent's currently linked students
-router.get('/users/:id/children', (req, res) => {
+router.get('/users/:id/children', asyncHandler(async (req, res) => {
   const parentId = Number(req.params.id);
-  if (!isParentAccount(parentId)) {
+  if (!(await isParentAccount(parentId))) {
     return res.status(404).json({ error: 'That account is not a parent account.' });
   }
-  res.json({ children: getChildrenOfParent(parentId) });
-});
+  res.json({ children: await getChildrenOfParent(parentId) });
+}));
 
 // PUT /api/admin/users/:id/children — replace a parent's linked students
 // (send the full new set of student IDs, e.g. to add or remove a child
 // without recreating the parent account). Any id that isn't an existing
 // student account is silently ignored server-side (see setParentChildren).
-router.put('/users/:id/children', (req, res) => {
+router.put('/users/:id/children', asyncHandler(async (req, res) => {
   const parentId = Number(req.params.id);
   const { studentIds } = req.body || {};
-  if (!isParentAccount(parentId)) {
+  if (!(await isParentAccount(parentId))) {
     return res.status(404).json({ error: 'That account is not a parent account.' });
   }
   if (!Array.isArray(studentIds)) {
     return res.status(400).json({ error: 'studentIds must be an array of student account IDs.' });
   }
-  setParentChildren(parentId, studentIds);
-  res.json({ children: getChildrenOfParent(parentId) });
-});
+  await setParentChildren(parentId, studentIds);
+  res.json({ children: await getChildrenOfParent(parentId) });
+}));
 
 // DELETE /api/admin/users/:id — remove an account (also removes any
 // parent↔student links it was part of, via ON DELETE CASCADE)
-router.delete('/users/:id', (req, res) => {
+router.delete('/users/:id', asyncHandler(async (req, res) => {
   const targetId = Number(req.params.id);
 
   if (targetId === req.user.id) {
     return res.status(400).json({ error: 'You cannot remove your own admin account while signed in.' });
   }
 
-  const info = deleteUser(targetId);
+  const info = await deleteUser(targetId);
   if (info.changes === 0) {
     return res.status(404).json({ error: 'Account not found.' });
   }
   res.json({ ok: true });
-});
+}));
 
 module.exports = router;

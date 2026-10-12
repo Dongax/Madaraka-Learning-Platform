@@ -260,23 +260,23 @@
       </div>
     </div>
     <div class="nav-right">
-      <span class="nav-badge" id="student-class-badge">Grade 2 · Stream A</span>
+      <span class="nav-badge" id="student-class-badge">Loading…</span>
       <button class="logout-btn" onclick="logout()">Sign Out</button>
     </div>
   </nav>
 
   <div class="app-body">
     <div class="dashboard-header">
-      <h1 id="student-welcome">Good morning, Amina! 👋</h1>
-      <p id="student-subtitle">Tuesday, 7 May 2025 · Term 2, Week 4</p>
+      <h1 id="student-welcome">Welcome 👋</h1>
+      <p id="student-subtitle"></p>
     </div>
 
     <!-- Stats -->
     <div class="stat-grid">
       <div class="stat-card accent-blue">
         <div class="stat-icon">📚</div>
-        <div class="stat-val">6</div>
-        <div class="stat-label">CBC Learning Areas</div>
+        <div class="stat-val" id="s-areas-stat">0</div>
+        <div class="stat-label">Learning Areas With Content</div>
       </div>
       <div class="stat-card accent-green">
         <div class="stat-icon">✅</div>
@@ -311,32 +311,32 @@
         <div class="subject-card sub-english" onclick="switchToLibraryArea('English Language Activities')">
           <div class="sub-icon">📖</div>
           <div class="sub-name">English Language</div>
-          <div class="sub-progress">Strand: Reading &amp; Listening</div>
+          <div class="sub-progress" data-area="English Language Activities">Loading…</div>
         </div>
         <div class="subject-card sub-swahili" onclick="switchToLibraryArea('Kiswahili Language Activities')">
           <div class="sub-icon">🗣️</div>
           <div class="sub-name">Kiswahili Language</div>
-          <div class="sub-progress">Strand: Kusoma</div>
+          <div class="sub-progress" data-area="Kiswahili Language Activities">Loading…</div>
         </div>
         <div class="subject-card sub-math" onclick="switchToLibraryArea('Mathematical Activities')">
           <div class="sub-icon">🔢</div>
           <div class="sub-name">Mathematical Activities</div>
-          <div class="sub-progress">Strand: Numbers</div>
+          <div class="sub-progress" data-area="Mathematical Activities">Loading…</div>
         </div>
         <div class="subject-card sub-enviro" onclick="switchToLibraryArea('Environmental Activities')">
           <div class="sub-icon">🌿</div>
           <div class="sub-name">Environmental Activities</div>
-          <div class="sub-progress">Strand: Living Things</div>
+          <div class="sub-progress" data-area="Environmental Activities">Loading…</div>
         </div>
         <div class="subject-card sub-religious" onclick="switchToLibraryArea('Religious Education Activities')">
           <div class="sub-icon">🙏</div>
           <div class="sub-name">Religious Education</div>
-          <div class="sub-progress">Strand: Creation</div>
+          <div class="sub-progress" data-area="Religious Education Activities">Loading…</div>
         </div>
         <div class="subject-card sub-creative" onclick="switchToLibraryArea('Creative Activities')">
           <div class="sub-icon">🎨</div>
           <div class="sub-name">Creative Activities</div>
-          <div class="sub-progress">Art, Music &amp; Movement</div>
+          <div class="sub-progress" data-area="Creative Activities">Loading…</div>
         </div>
       </div>
 
@@ -431,15 +431,15 @@
       </div>
     </div>
     <div class="nav-right">
-      <span class="nav-badge" id="teacher-class-badge">Grade 2 Class Teacher</span>
+      <span class="nav-badge" id="teacher-class-badge">Loading…</span>
       <button class="logout-btn" onclick="logout()">Sign Out</button>
     </div>
   </nav>
 
   <div class="app-body">
     <div class="dashboard-header">
-      <h1 id="teacher-welcome">Welcome, Tr. Pam Oduor 👋</h1>
-      <p id="teacher-subtitle">Tuesday, 7 May 2025 · Grade 2 Stream A · 32 learners</p>
+      <h1 id="teacher-welcome">Welcome 👋</h1>
+      <p id="teacher-subtitle"></p>
     </div>
 
     <div class="stat-grid">
@@ -529,7 +529,7 @@
 
     <!-- Attendance Tab (Class Register) -->
     <div id="t-attendance" class="tab-content">
-      <p class="section-title">📅 Class Register — <span id="teacher-attendance-class">Grade 2A</span> <span class="badge" id="att-count">0/0 present</span></p>
+      <p class="section-title">📅 Class Register — <span id="teacher-attendance-class">—</span> <span class="badge" id="att-count">0/0 present</span></p>
       <div class="card">
         <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
           <label style="font-size:13px;font-weight:600;color:var(--muted);">Date</label>
@@ -648,7 +648,7 @@
 
     <!-- Results Tab -->
     <div id="t-results" class="tab-content">
-      <p class="section-title">📊 Attendance Summary — <span id="teacher-performance-class">Grade 2A</span></p>
+      <p class="section-title">📊 Attendance Summary — <span id="teacher-performance-class">—</span></p>
       <div class="card">
         <table>
           <thead><tr><th>Student</th><th>Present</th><th>Absent</th><th>Late</th><th>Attendance Rate</th></tr></thead>
@@ -707,7 +707,7 @@
 
   <div class="app-body">
     <div class="dashboard-header">
-      <h1 id="parent-welcome">Welcome, Mr. Samuel Wanjiku 👋</h1>
+      <h1 id="parent-welcome">Welcome 👋</h1>
       <p>Madaraka Primary School Parent Portal</p>
     </div>
 
@@ -721,9 +721,9 @@
     <div class="child-banner" id="parent-child-banner">
       <div class="child-avatar">👧</div>
       <div>
-        <div class="child-name" id="parent-child-name">Amina Wanjiku</div>
-        <div class="child-class" id="parent-child-class">Grade 2 · Stream A · Class Teacher: Tr. Dalmas Okoth</div>
-        <div class="child-adm" id="parent-child-adm">Admission No. MPS-2024-0042</div>
+        <div class="child-name" id="parent-child-name">—</div>
+        <div class="child-class" id="parent-child-class"></div>
+        <div class="child-adm" id="parent-child-adm"></div>
       </div>
       <div style="margin-left:auto;text-align:right">
         <div style="font-size:28px;font-weight:800;" id="parent-banner-att-rate">—</div>
@@ -1261,6 +1261,7 @@ function showDash(role) {
   if (role === 'student') {
     loadStudentQuiz();
     loadStudentLibrary();
+    loadStudentGradeBooks();
     loadStudentTimetable();
     loadStudentMaterials();
     loadStudentAttendance();
@@ -1871,6 +1872,36 @@ async function deleteTimetablePeriod(id) {
 }
 
 // ─── MATERIALS ───
+// Live per-learning-area counts on the student's subject cards, built from
+// the real materials, quiz questions and course books for their class/grade
+// — nothing here is hardcoded, so it updates as teachers/admins add content.
+let studentMaterialsData = [];
+let studentGradeBooks = [];
+
+async function loadStudentGradeBooks() {
+  if (!currentUser || !currentUser.class) { studentGradeBooks = []; renderSubjectCounts(); return; }
+  const grade = 'Grade ' + currentUser.class.replace(/^Grade\s*/, '').replace(/[A-Za-z]$/, '');
+  try {
+    const data = await api(`/api/books?grade=${encodeURIComponent(grade)}`);
+    studentGradeBooks = data.books;
+  } catch (e) { studentGradeBooks = []; }
+  renderSubjectCounts();
+}
+
+function renderSubjectCounts() {
+  let withContent = 0;
+  document.querySelectorAll('#s-subjects [data-area]').forEach(el => {
+    const area = el.getAttribute('data-area');
+    const m = studentMaterialsData.filter(x => x.learning_area === area).length;
+    const q = (typeof studentQuizzes !== 'undefined' ? studentQuizzes : []).filter(x => x.learning_area === area).length;
+    const b = studentGradeBooks.filter(x => x.learning_area === area).length;
+    if (m + q + b > 0) withContent++;
+    el.textContent = `${m} material${m===1?'':'s'} · ${q} quiz · ${b} book${b===1?'':'s'}`;
+  });
+  const stat = document.getElementById('s-areas-stat');
+  if (stat) stat.textContent = withContent;
+}
+
 async function loadStudentMaterials() {
   if (!currentUser || !currentUser.class) {
     renderMaterialsList('s-subjects-materials', []);
@@ -1879,6 +1910,8 @@ async function loadStudentMaterials() {
   }
   try {
     const data = await api(`/api/materials?class=${encodeURIComponent(currentUser.class)}`);
+    studentMaterialsData = data.materials;
+    renderSubjectCounts();
     renderMaterialsList('s-subjects-materials', data.materials);
     renderMaterialsList('s-lessons-materials', data.materials);
     const teacherEl = document.getElementById('s-subjects-teacher');
@@ -2180,6 +2213,7 @@ async function loadStudentQuiz() {
     if (countEl) countEl.textContent = `${studentQuizzes.length} question${studentQuizzes.length===1?'':'s'}`;
     const statEl = document.getElementById('s-quiz-count-stat');
     if (statEl) statEl.textContent = studentQuizzes.length;
+    renderSubjectCounts();
     renderStudentQuiz();
   } catch (e) {
     studentQuizzes = [];

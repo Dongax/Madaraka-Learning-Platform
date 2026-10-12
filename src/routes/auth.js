@@ -1,6 +1,7 @@
 const express = require('express');
 const { findAccount, verifyPassword, getUserProfile } = require('../db');
 const { issueSessionCookie, clearSessionCookie, requireAuth } = require('../middleware/auth');
+const asyncHandler = require('../middleware/asyncHandler');
 
 const router = express.Router();
 
@@ -11,14 +12,14 @@ const router = express.Router();
 // REAL class (student/teacher) or linked children (parent), so the
 // dashboard the frontend shows next reflects the actual account, not
 // generic placeholder content.
-router.post('/login', (req, res) => {
+router.post('/login', asyncHandler(async (req, res) => {
   const { id, password } = req.body || {};
 
   if (!id || !password) {
     return res.status(400).json({ error: 'Please enter both your login ID and password.' });
   }
 
-  const user = findAccount(String(id).trim());
+  const user = await findAccount(String(id).trim());
   if (!user || !verifyPassword(user, password)) {
     return res.status(401).json({
       error: 'No account matches that ID and password. Ask your administrator if you need an account.',
@@ -26,8 +27,8 @@ router.post('/login', (req, res) => {
   }
 
   issueSessionCookie(res, user);
-  res.json({ user: getUserProfile(user.id) });
-});
+  res.json({ user: await getUserProfile(user.id) });
+}));
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
@@ -40,12 +41,12 @@ router.post('/logout', (req, res) => {
 // student/teacher's class, or edits a parent's linked children, after the
 // person logged in, refreshing the page picks up the change immediately —
 // no need to log out and back in.
-router.get('/me', requireAuth, (req, res) => {
-  const profile = getUserProfile(req.user.id);
+router.get('/me', requireAuth, asyncHandler(async (req, res) => {
+  const profile = await getUserProfile(req.user.id);
   if (!profile) {
     return res.status(401).json({ error: 'This account no longer exists.' });
   }
   res.json({ user: profile });
-});
+}));
 
 module.exports = router;

@@ -88,12 +88,11 @@ data/
 
 ## Requirements
 
-- **Node.js 22.5+** (24.x recommended). This project uses Node's built-in
-  `node:sqlite` module instead of a third-party native package, specifically
-  to avoid the native-binding / node-gyp build errors those packages cause
-  on some machines (especially Windows). You'll see a one-line
-  `ExperimentalWarning: SQLite is an experimental feature` on startup —
-  that's expected and harmless.
+- **Node.js 22.5+** (24.x recommended). The database is plain SQLite through
+  Node's built-in `node:sqlite` module — no native compiler or build tools
+  needed. All data lives in one file, `data/school.db` (or wherever `DB_PATH`
+  points). You'll see a one-line `ExperimentalWarning: SQLite is an
+  experimental feature` on startup; it's expected and harmless.
 
 ## Getting started
 
@@ -189,6 +188,16 @@ existing admin account.
   branches on `q.type` to show either the usual A–D buttons or a textarea
   (`submitOpenAnswer()`); the teacher's Quiz Bank shows a "👀 View
   Responses" toggle (`toggleResponses()`) on each unstructured question.
+
+## Hosting note: keep the database file on a persistent disk
+
+Because the database is a single SQLite file, wherever you host this the
+`data/` folder must be on storage that survives restarts. On a laptop, a VPS,
+or a host with a persistent disk (e.g. Render's paid plans with a Disk
+mounted at your `data/` folder, with `DB_PATH` pointing into it), that's fine.
+On hosts with an ephemeral filesystem — including Render's free web service —
+the file is wiped on every restart/redeploy/spin-down, so accounts and records
+would be lost. Back up `data/school.db` regularly.
 
 ## Notes & next steps for production
 
