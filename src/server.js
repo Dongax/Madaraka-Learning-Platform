@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const bookRoutes = require('./routes/books');
 const academicRoutes = require('./routes/academic');
+const { nairobiToday } = require('./time');
 
 async function main() {
   // Schema creation/migration and seeding finish before the app starts
@@ -25,6 +26,14 @@ async function main() {
   app.use(express.json());
   app.use(cookieParser());
   app.use(readSession);
+
+  // Authoritative "now" in Kenya time (Africa/Nairobi, UTC+3, no daylight
+  // saving). The browser uses this so "today" on the register, dashboards
+  // and messages never depends on the device's own clock or time zone.
+  app.get('/api/now', (req, res) => {
+    const now = new Date();
+    res.json({ epochMs: now.getTime(), today: nairobiToday(now), timeZone: 'Africa/Nairobi' });
+  });
 
   // ─── API ───
   app.use('/api/auth', authRoutes);

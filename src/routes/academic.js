@@ -30,6 +30,7 @@ const {
 } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const asyncHandler = require('../middleware/asyncHandler');
+const { nairobiToday, isValidISODate } = require('../time');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -123,7 +124,7 @@ router.get('/attendance/register', asyncHandler(async (req, res) => {
   if (!await canManageClass(req, klass)) {
     return res.status(403).json({ error: 'You can only view the register for your own class.' });
   }
-  if (!date) return res.status(400).json({ error: 'A date is required.' });
+  if (!isValidISODate(date)) return res.status(400).json({ error: 'A valid date (YYYY-MM-DD) is required.' });
   res.json({
     roster: await getRegisterForClassOnDate(klass, date),
     counts: await getAttendanceCountsForClassOnDate(klass, date),
@@ -138,7 +139,12 @@ router.post('/attendance/register', asyncHandler(async (req, res) => {
   if (!await canManageClass(req, klass)) {
     return res.status(403).json({ error: 'You can only take the register for your own class.' });
   }
-  if (!date) return res.status(400).json({ error: 'A date is required.' });
+  if (!isValidISODate(date)) return res.status(400).json({ error: 'A valid date (YYYY-MM-DD) is required.' });
+  // Dates follow Kenya time; the register can't be marked for a day that
+  // hasn't happened yet in Nairobi.
+  if (date > nairobiToday()) {
+    return res.status(400).json({ error: "You can't take the register for a future date." });
+  }
   if (!Array.isArray(entries) || !entries.length) {
     return res.status(400).json({ error: 'At least one attendance entry is required.' });
   }

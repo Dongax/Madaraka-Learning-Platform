@@ -1142,7 +1142,7 @@ function personalizeDash(role, account) {
     if (badgeEl) badgeEl.textContent = account.class || 'No class assigned yet';
     const subtitleEl = document.getElementById('student-subtitle');
     if (subtitleEl) {
-      const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const today = longDateKE();
       subtitleEl.textContent = account.class ? `${today} · ${account.class}` : today;
     }
 
@@ -1156,7 +1156,7 @@ function personalizeDash(role, account) {
     const perfClassEl = document.getElementById('teacher-performance-class');
     const classSizeEl = document.getElementById('teacher-class-size');
     const noClassNotice = document.getElementById('teacher-no-class-notice');
-    const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const today = longDateKE();
 
     if (account.class) {
       if (badgeEl) badgeEl.textContent = `${account.class}${account.detail ? ' · ' + account.detail : ' · Class Teacher'}`;
@@ -1292,7 +1292,7 @@ async function restoreSession() {
     // no active session — stay on login screen
   }
 }
-document.addEventListener('DOMContentLoaded', restoreSession);
+document.addEventListener('DOMContentLoaded', async () => { await syncClock(); restoreSession(); });
 
 // ─── ACCOUNTS / LOGIN DIRECTORY (ADMIN ONLY) ───
 function roleMeta(role) {
@@ -1356,7 +1356,7 @@ function renderAccountsTable() {
       .filter(u => !search || u.name.toLowerCase().includes(search) || u.login_id.toLowerCase().includes(search))
       .map(u => {
         const meta = roleMeta(u.role);
-        const created = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
+        const created = u.created_at ? fmtStampDateKE(u.created_at) : '—';
 
         let detailsCell = u.detail || '';
         if (u.role === 'parent') {
@@ -1733,16 +1733,55 @@ function switchTab(group, targetId, btn) {
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
-function todayISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+// ─── KENYA TIME (Africa/Nairobi, EAT, UTC+3) ───
+// Everything the school sees follows Kenya time, regardless of the device's
+// own time zone. The server's clock is the reference (clockOffsetMs), so a
+// wrong device clock can't mark the register for the wrong day either.
+// The database stores UTC; values are converted here for display.
+const KE_TZ = 'Africa/Nairobi';
+let clockOffsetMs = 0;
+
+async function syncClock() {
+  try {
+    const t0 = Date.now();
+    const data = await api('/api/now');
+    const latency = (Date.now() - t0) / 2;
+    clockOffsetMs = data.epochMs + latency - Date.now();
+  } catch (e) { /* fall back to the device clock */ }
 }
+function nowKE() { return new Date(Date.now() + clockOffsetMs); }
+
+// YYYY-MM-DD for "today" in Nairobi.
+function todayISO(d = nowKE()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: KE_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+}
+// Long date, e.g. "Monday, 12 October 2026" (Nairobi).
+function longDateKE(d = nowKE()) {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: KE_TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+}
+// SQLite stores 'YYYY-MM-DD HH:MM:SS' in UTC with no zone marker — read it as UTC.
+function parseDbTime(s) {
+  if (!s) return null;
+  const iso = String(s).includes('T') ? String(s) : String(s).replace(' ', 'T');
+  return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : iso + 'Z');
+}
+// "13 Oct 2026, 00:30 EAT"
+function fmtDateTimeKE(s) {
+  const d = parseDbTime(s);
+  if (!d || Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-GB', { timeZone: KE_TZ, day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(d) + ' EAT';
+}
+// A stored UTC timestamp shown as a Nairobi calendar date.
+function fmtStampDateKE(s) {
+  const d = parseDbTime(s);
+  if (!d || Number.isNaN(d.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-GB', { timeZone: KE_TZ, day: 'numeric', month: 'short', year: 'numeric' }).format(d);
+}
+// A plain calendar date (YYYY-MM-DD, already a Kenya date) — no time-zone shifting.
 function fmtDate(iso) {
-  try { return new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }); }
-  catch(e) { return iso; }
+  try { return new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso + 'T00:00:00Z')); }
+  catch (e) { return iso; }
 }
-// A student card's class → jump straight to the CBC Library tab filtered
-// to that learning area.
 function switchToLibraryArea(area) {
   const libBtn = Array.from(document.querySelectorAll('#student-dash .tab-btn')).find(b => b.textContent.includes('CBC Library'));
   if (libBtn) switchTab('s', 's-library', libBtn);
@@ -1788,7 +1827,7 @@ function renderMessageThread(containerId, thread, meId) {
     <div class="msg-bubble">
       <div class="msg-from">${m.from_role === 'teacher' ? '👩‍🏫' : '👨‍👩‍👧'} ${escapeHtml(m.from_name)}${m.from_user_id === meId ? ' (you)' : ''}</div>
       <div class="msg-text">${escapeHtml(m.body)}</div>
-      <div class="msg-time">${new Date(m.created_at).toLocaleString()}</div>
+      <div class="msg-time">${fmtDateTimeKE(m.created_at)}</div>
     </div>
   `).join('') : `<div style="text-align:center;color:var(--muted);padding:20px;">No messages yet — start the conversation below.</div>`;
   el.scrollTop = el.scrollHeight;

@@ -217,6 +217,21 @@ to wake; your data is unaffected because it lives in Turso. (If you instead
 use a paid host with a persistent disk, you can skip Turso and point `DB_PATH`
 at the disk.) Back up your data regularly.
 
+## Time zone: Kenya time everywhere
+
+All times the school sees follow **Africa/Nairobi (EAT, UTC+3, no daylight
+saving)**, whatever time zone the device or server is in.
+
+- The database stores timestamps in **UTC** (standard practice); the page
+  converts them for display (`fmtDateTimeKE`, `fmtStampDateKE` in `app.html`).
+- "Today" (the default register date, the dashboards' date line, "Present
+  Today") comes from the **server's clock** via `GET /api/now`, converted to
+  Nairobi — so a wrong device clock or time zone can't mark the wrong day.
+- The server validates register dates (`YYYY-MM-DD`) and rejects dates that
+  are in the future in Nairobi.
+- Render servers run in UTC; that's fine, because nothing depends on the
+  server's local zone — `src/time.js` converts explicitly.
+
 ## Notes & next steps for production
 
 - Set a strong, random `JWT_SECRET` and a non-default `ADMIN_PASSWORD` in
