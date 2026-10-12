@@ -3,7 +3,7 @@ const path = require('path');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
-const { initSchema, ensureInitialAdmin, ensureBooksSeeded } = require('./db');
+const { initSchema, ensureInitialAdmin, ensureBooksSeeded, usingRemote } = require('./db');
 const { readSession } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
@@ -16,6 +16,10 @@ async function main() {
   await initSchema();
   await ensureInitialAdmin();
   await ensureBooksSeeded();
+
+  console.log(usingRemote
+    ? '[db] Connected to remote Turso database.'
+    : '[db] Using a local SQLite file (set TURSO_DATABASE_URL to use a hosted database instead).');
 
   const app = express();
   app.use(express.json());

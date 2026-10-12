@@ -88,11 +88,14 @@ data/
 
 ## Requirements
 
-- **Node.js 22.5+** (24.x recommended). The database is plain SQLite through
-  Node's built-in `node:sqlite` module — no native compiler or build tools
-  needed. All data lives in one file, `data/school.db` (or wherever `DB_PATH`
-  points). You'll see a one-line `ExperimentalWarning: SQLite is an
-  experimental feature` on startup; it's expected and harmless.
+- **Node.js 22.5+** for local use (the default database is plain SQLite via
+  Node's built-in `node:sqlite` — no compiler needed; you'll see a harmless
+  `ExperimentalWarning` on startup). When deploying with a hosted Turso
+  database (below), Node 18+ is enough.
+- **Two storage modes, chosen by environment variables:**
+  - *Local (default):* one SQLite file at `data/school.db` (or `DB_PATH`).
+  - *Hosted (free):* set `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` and the
+    same app stores everything in a free Turso database instead.
 
 ## Getting started
 
@@ -189,15 +192,30 @@ existing admin account.
   (`submitOpenAnswer()`); the teacher's Quiz Bank shows a "👀 View
   Responses" toggle (`toggleResponses()`) on each unstructured question.
 
-## Hosting note: keep the database file on a persistent disk
+## Deploying for $0 and keeping your data (Render free + Turso free)
 
-Because the database is a single SQLite file, wherever you host this the
-`data/` folder must be on storage that survives restarts. On a laptop, a VPS,
-or a host with a persistent disk (e.g. Render's paid plans with a Disk
-mounted at your `data/` folder, with `DB_PATH` pointing into it), that's fine.
-On hosts with an ephemeral filesystem — including Render's free web service —
-the file is wiped on every restart/redeploy/spin-down, so accounts and records
-would be lost. Back up `data/school.db` regularly.
+Render's free web service has no disk, so the database must live elsewhere.
+Turso is a free hosted SQLite-compatible database; the app talks to it
+automatically when two environment variables are set.
+
+1. **Create the database** at turso.tech (free, no card): create a database,
+   then copy its URL (`libsql://…turso.io`) and create an auth token for it
+   (dashboard → your database → create token; or CLI:
+   `turso db show <name> --url`, `turso db tokens create <name>`).
+2. **Push this repo to GitHub** (`.env` and `data/` are git-ignored).
+3. **Render → New → Web Service** → pick the repo. Build Command
+   `npm install`, Start Command `npm start`, Instance Type **Free**.
+   Set *Root Directory* to `project` only if the app lives in that subfolder.
+4. **Environment variables:** `JWT_SECRET` (long random string), `ADMIN_ID`,
+   `ADMIN_PASSWORD`, `ADMIN_NAME`, `NODE_ENV=production`,
+   `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`.
+5. **Deploy.** The logs should show `[db] Connected to remote Turso database.`
+   Tables and the first admin are created automatically on first boot.
+
+The free Render service sleeps after ~15 minutes idle and takes up to a minute
+to wake; your data is unaffected because it lives in Turso. (If you instead
+use a paid host with a persistent disk, you can skip Turso and point `DB_PATH`
+at the disk.) Back up your data regularly.
 
 ## Notes & next steps for production
 

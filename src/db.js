@@ -1,52 +1,73 @@
 const path = require('path');
 const fs = require('fs');
-const { DatabaseSync } = require('node:sqlite');
 const bcrypt = require('bcryptjs');
 
 // ─── CONNECTION ───
-// Plain SQLite via Node's built-in `node:sqlite` module — no native build
-// step and no external service. Data lives in one file (data/school.db by
-// default, or wherever DB_PATH points).
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'data', 'school.db');
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+// Two interchangeable storage modes, picked purely by environment variables:
+//
+//  • LOCAL (default): plain SQLite through Node's built-in `node:sqlite`.
+//    All data lives in one file (data/school.db, or DB_PATH). Needs Node 22.5+.
+//
+//  • REMOTE: if TURSO_DATABASE_URL is set, the same SQL runs against a free
+//    hosted Turso (libSQL, SQLite-compatible) database over the network. Use
+//    this on hosts with no persistent disk (e.g. Render's free web service),
+//    so data survives restarts, redeploys and idle sleeps.
+//
+// Either way, run() / get() / all() / execMultiple() below are the only
+// things the rest of the app touches, and they are all async.
+const usingRemote = !!process.env.TURSO_DATABASE_URL;
+let run, get, all, execMultiple;
 
-const db = new DatabaseSync(DB_PATH);
-db.exec('PRAGMA journal_mode = WAL;');
-db.exec('PRAGMA foreign_keys = ON;');
-
-// ─── QUERY HELPERS ───
-// Small wrappers so the rest of this file (and every route) can use one
-// consistent async interface: run() for writes, get() for one row, all()
-// for many rows. `args` is either an array (positional `?` placeholders) or
-// an object (named `@name` placeholders). node:sqlite is synchronous under
-// the hood; the functions stay async so the calling code doesn't change.
-function bind(stmt, method, args) {
-  if (Array.isArray(args)) return stmt[method](...args);
-  if (args && typeof args === 'object') return stmt[method](args);
-  return stmt[method]();
-}
-
-async function run(sql, args) {
-  const info = bind(db.prepare(sql), 'run', args);
-  return {
-    changes: Number(info.changes),
-    lastInsertRowid: info.lastInsertRowid != null ? Number(info.lastInsertRowid) : undefined,
+if (usingRemote) {
+  const { createClient } = require('@libsql/client');
+  const client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN || undefined,
+    // Plain JS numbers (not BigInt) so rows can go straight into res.json().
+    intMode: 'number',
+  });
+  const toPlain = result => result.rows.map(row => {
+    const obj = {};
+    result.columns.forEach((col, i) => { obj[col] = row[i]; });
+    return obj;
+  });
+  run = async (sql, args) => {
+    const r = await client.execute({ sql, args: args ?? [] });
+    return {
+      changes: r.rowsAffected,
+      lastInsertRowid: r.lastInsertRowid != null ? Number(r.lastInsertRowid) : undefined,
+    };
   };
-}
+  all = async (sql, args) => toPlain(await client.execute({ sql, args: args ?? [] }));
+  get = async (sql, args) => (await all(sql, args))[0] || null;
+  execMultiple = async sql => { await client.executeMultiple(sql); };
+} else {
+  const { DatabaseSync } = require('node:sqlite');
+  const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'data', 'school.db');
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+  const db = new DatabaseSync(DB_PATH);
+  db.exec('PRAGMA journal_mode = WAL;');
+  db.exec('PRAGMA foreign_keys = ON;');
 
-async function all(sql, args) {
-  return bind(db.prepare(sql), 'all', args).map(row => ({ ...row }));
-}
-
-async function get(sql, args) {
-  const row = bind(db.prepare(sql), 'get', args);
-  return row ? { ...row } : null;
-}
-
-// Runs a block of semicolon-separated statements (CREATE TABLE, ALTER
-// TABLE, etc.).
-async function execMultiple(sql) {
-  db.exec(sql);
+  // `args` is an array (positional `?`) or an object (named `@name`).
+  const bind = (stmt, method, args) => {
+    if (Array.isArray(args)) return stmt[method](...args);
+    if (args && typeof args === 'object') return stmt[method](args);
+    return stmt[method]();
+  };
+  run = async (sql, args) => {
+    const info = bind(db.prepare(sql), 'run', args);
+    return {
+      changes: Number(info.changes),
+      lastInsertRowid: info.lastInsertRowid != null ? Number(info.lastInsertRowid) : undefined,
+    };
+  };
+  all = async (sql, args) => bind(db.prepare(sql), 'all', args).map(row => ({ ...row }));
+  get = async (sql, args) => {
+    const row = bind(db.prepare(sql), 'get', args);
+    return row ? { ...row } : null;
+  };
+  execMultiple = async sql => { db.exec(sql); };
 }
 
 // ─── SCHEMA ───
@@ -659,7 +680,7 @@ async function ensureInitialAdmin() {
 }
 
 module.exports = {
-  db,
+  usingRemote,
   CLASSES,
   initSchema,
   createUser,
