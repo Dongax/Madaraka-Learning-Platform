@@ -558,16 +558,21 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Title</label>
+              <label>Title <span style="text-transform:none;font-weight:400;">(optional if you attach a file)</span></label>
               <input id="mt-title" type="text" placeholder="e.g. Long Vowel Sounds Worksheet" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+            </div>
+            <div class="form-group">
+              <label>Attach a File (optional)</label>
+              <input id="mt-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" style="width:100%;padding:9px;border:2px dashed var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:#FAFAFA;">
+              <p id="mt-file-hint" style="font-size:12px;color:var(--muted);margin-top:6px;">PDF, image, Word, Excel, PowerPoint, text or CSV.</p>
             </div>
             <div class="form-group">
               <label>Notes / Resource Link (optional)</label>
               <textarea id="mt-notes" placeholder="Add a description, or paste a link to a PDF/video/audio resource…" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;min-height:70px;outline:none;margin-bottom:14px;"></textarea>
             </div>
             <div id="mt-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
-            <button onclick="addMaterial()" style="width:100%;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Share with Class 📤</button>
-            <p style="font-size:12px;color:var(--muted);margin-top:10px;">There's no file-storage backend yet, so this stores a title, learning area and notes/link — not the file itself.</p>
+            <button id="mt-submit" onclick="addMaterial()" style="width:100%;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Share with Class 📤</button>
+            <p style="font-size:12px;color:var(--muted);margin-top:10px;">Students and parents of your class can open the file straight from their dashboards.</p>
           </div>
         </div>
         <div>
@@ -1146,7 +1151,7 @@ function personalizeDash(role, account) {
       subtitleEl.textContent = account.class ? `${today} · ${account.class}` : today;
     }
 
-  } else if (role === 'teacher') {
+  } else if (role === 'teacher') { loadUploadLimits();
     const welcomeEl = document.getElementById('teacher-welcome');
     if (welcomeEl) welcomeEl.textContent = `${greetingKE()}, ${account.name} 👋`;
 
@@ -1798,6 +1803,38 @@ function switchToLibraryArea(area) {
   loadStudentLibrary();
 }
 
+function fmtFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+function fileIcon(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  if (ext === 'pdf') return '📄';
+  if (['png','jpg','jpeg','gif','webp'].includes(ext)) return '🖼️';
+  if (['doc','docx'].includes(ext)) return '📝';
+  if (['xls','xlsx','csv'].includes(ext)) return '📊';
+  if (['ppt','pptx'].includes(ext)) return '📽️';
+  return '📎';
+}
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.readAsDataURL(file);
+  });
+}
+let uploadMaxMb = 3;
+async function loadUploadLimits() {
+  try {
+    const data = await api('/api/upload-limits');
+    uploadMaxMb = data.maxMb;
+    const hint = document.getElementById('mt-file-hint');
+    if (hint) hint.textContent = `PDF, image, Word, Excel, PowerPoint, text or CSV — up to ${uploadMaxMb} MB.`;
+  } catch (e) { /* keep defaults */ }
+}
+
 function renderMaterialsList(containerId, materials, { showDelete } = {}) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -1807,6 +1844,7 @@ function renderMaterialsList(containerId, materials, { showDelete } = {}) {
       <div class="lesson-info">
         <div class="lesson-title">${escapeHtml(m.title)}</div>
         <div class="lesson-meta">${escapeHtml(m.learning_area)}${m.notes ? ' · ' + escapeHtml(m.notes) : ''}</div>
+        ${m.file_name ? `<a href="/api/materials/${m.id}/file" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--student);text-decoration:none;">${fileIcon(m.file_name)} ${escapeHtml(m.file_name)} <span style="font-weight:400;color:var(--muted);">(${fmtFileSize(m.file_size)})</span></a>` : ''}
       </div>
       ${showDelete ? `<button class="logout-btn" style="background:#FFEBEE;border:1px solid #FFCDD2;color:var(--red);padding:5px 10px;font-size:12px;" onclick="deleteMaterialItem(${m.id})">Remove</button>` : ''}
     </div>
@@ -2010,6 +2048,7 @@ async function loadTeacherMaterials() {
 
 async function addMaterial() {
   const errBox = document.getElementById('mt-error');
+  const btn = document.getElementById('mt-submit');
   errBox.style.display = 'none';
   if (!currentUser.class) {
     errBox.textContent = 'You have no class assigned yet — ask the school administrator to assign you one.';
@@ -2019,22 +2058,37 @@ async function addMaterial() {
   const learningArea = document.getElementById('mt-area').value;
   const title = document.getElementById('mt-title').value.trim();
   const notes = document.getElementById('mt-notes').value.trim();
-  if (!title) {
-    errBox.textContent = 'Please enter a title.';
+  const fileInput = document.getElementById('mt-file');
+  const chosen = fileInput.files[0];
+
+  if (!title && !chosen) {
+    errBox.textContent = 'Please enter a title or attach a file.';
     errBox.style.display = 'block';
     return;
   }
+  if (chosen && chosen.size > uploadMaxMb * 1024 * 1024) {
+    errBox.textContent = `That file is ${fmtFileSize(chosen.size)} — the limit is ${uploadMaxMb} MB. Try compressing it or splitting it.`;
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = chosen ? 'Uploading…' : 'Sharing…';
   try {
-    await api('/api/materials', {
-      method: 'POST',
-      body: JSON.stringify({ class: currentUser.class, learningArea, title, notes })
-    });
+    const payload = { class: currentUser.class, learningArea, title, notes };
+    if (chosen) payload.file = { name: chosen.name, data: await readFileAsBase64(chosen) };
+    await api('/api/materials', { method: 'POST', body: JSON.stringify(payload) });
     document.getElementById('mt-title').value = '';
     document.getElementById('mt-notes').value = '';
+    fileInput.value = '';
     await loadTeacherMaterials();
   } catch (e) {
     errBox.textContent = e.message || 'Could not share this material.';
     errBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
 

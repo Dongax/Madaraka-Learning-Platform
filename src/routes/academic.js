@@ -17,6 +17,9 @@ const {
   addMaterial,
   getMaterialsForClass,
   getMaterial,
+  saveMaterialFile,
+  getMaterialFile,
+  getChildrenOfParent,
   deleteMaterial,
   addQuizQuestion,
   getQuizzesForClass,
@@ -31,6 +34,7 @@ const {
 const { requireAuth } = require('../middleware/auth');
 const asyncHandler = require('../middleware/asyncHandler');
 const { nairobiToday, isValidISODate } = require('../time');
+const { ALLOWED, MAX_UPLOAD_MB, validateUpload } = require('../uploads');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -180,16 +184,79 @@ router.get('/materials', asyncHandler(async (req, res) => {
   res.json({ materials: await getMaterialsForClass(klass) });
 }));
 
+// What teachers may upload and how big — the page reads this to show hints.
+router.get('/upload-limits', (req, res) => {
+  res.json({ maxMb: MAX_UPLOAD_MB, extensions: Object.keys(ALLOWED) });
+});
+
+// POST /api/materials — { class, learningArea, title, notes, file?: {name, data} }
+// A material can be just a title/notes, or also carry one uploaded file.
 router.post('/materials', asyncHandler(async (req, res) => {
-  const { class: klass, learningArea, title, notes } = req.body || {};
+  const { class: klass, learningArea, notes, file } = req.body || {};
+  let { title } = req.body || {};
   if (!await canManageClass(req, klass)) {
     return res.status(403).json({ error: 'You can only add materials for your own class.' });
   }
-  if (!title || !LEARNING_AREAS.includes(learningArea)) {
-    return res.status(400).json({ error: 'A title and a valid learning area are required.' });
+  if (!LEARNING_AREAS.includes(learningArea)) {
+    return res.status(400).json({ error: 'A valid learning area is required.' });
+  }
+  // Validate the file BEFORE creating anything, so a rejected upload never
+  // leaves a half-created material behind.
+  let upload = null;
+  if (file) {
+    try { upload = validateUpload(file); }
+    catch (e) { return res.status(400).json({ error: e.message }); }
+  }
+  title = (title || '').trim() || (upload ? upload.fileName.replace(/\.[^.]+$/, '') : '');
+  if (!title) {
+    return res.status(400).json({ error: 'A title (or a file) is required.' });
   }
   const material = await addMaterial({ klass, learningArea, title, notes, teacherId: req.user.id });
+  if (upload) {
+    await saveMaterialFile({ materialId: material.id, ...upload });
+    material.file_name = upload.fileName;
+    material.mime_type = upload.mimeType;
+    material.file_size = upload.size;
+  }
   res.status(201).json({ material });
+}));
+
+// Who may open a class's files: admins, that class's teacher, students in
+// that class, and parents with a child in that class.
+async function canAccessClassContent(req, klass) {
+  if (await canManageClass(req, klass)) return true;
+  if (req.user.role === 'student') {
+    const me = await getRawUserById(req.user.id);
+    return !!me && me.class === klass;
+  }
+  if (req.user.role === 'parent') {
+    const children = await getChildrenOfParent(req.user.id);
+    return children.some(c => c.class === klass);
+  }
+  return false;
+}
+
+// GET /api/materials/:id/file — the uploaded file itself. PDFs and images
+// open in the browser; everything else downloads.
+router.get('/materials/:id/file', asyncHandler(async (req, res) => {
+  const material = await getMaterial(Number(req.params.id));
+  if (!material) return res.status(404).json({ error: 'Material not found.' });
+  if (!await canAccessClassContent(req, material.class)) {
+    return res.status(403).json({ error: "You don't have access to this file." });
+  }
+  const file = await getMaterialFile(material.id);
+  if (!file) return res.status(404).json({ error: 'This material has no file attached.' });
+
+  const ext = (file.file_name.split('.').pop() || '').toLowerCase();
+  const inline = !!(ALLOWED[ext] && ALLOWED[ext].inline);
+  const asciiName = file.file_name.replace(/[^\x20-\x7e]/g, '_');
+  res.set({
+    'Content-Type': file.mime_type,
+    'Content-Disposition': `${inline ? 'inline' : 'attachment'}; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(file.file_name)}`,
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'private, max-age=300',
+  });
+  res.send(Buffer.from(file.data_b64, 'base64'));
 }));
 
 router.delete('/materials/:id', asyncHandler(async (req, res) => {

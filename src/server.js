@@ -23,7 +23,13 @@ async function main() {
     : '[db] Using a local SQLite file (set TURSO_DATABASE_URL to use a hosted database instead).');
 
   const app = express();
-  app.use(express.json());
+  // Uploads travel as base64 JSON, which is ~33% bigger than the file, so
+  // the materials endpoint gets a larger body limit; everything else keeps
+  // the small default.
+  const jsonSmall = express.json();
+  const jsonLarge = express.json({ limit: '8mb' });
+  app.use((req, res, next) =>
+    (req.method === 'POST' && req.path === '/api/materials') ? jsonLarge(req, res, next) : jsonSmall(req, res, next));
   app.use(cookieParser());
   app.use(readSession);
 
@@ -56,6 +62,9 @@ async function main() {
   app.use((err, req, res, next) => {
     console.error(err);
     if (res.headersSent) return next(err);
+    if (err.type === 'entity.too.large') {
+      return res.status(413).json({ error: 'That file is too large to upload.' });
+    }
     res.status(500).json({ error: 'Something went wrong on the server.' });
   });
 

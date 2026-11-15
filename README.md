@@ -31,10 +31,18 @@ no hardcoded demo content left anywhere in the app.
   Present/Absent" is still there as a quick bulk starting point, not the
   only way to do it. The same records power a student's own attendance
   summary and a parent's attendance tab for their linked child.
-- **Learning materials.** A teacher shares materials (learning area,
-  title, notes/link) with their class; students and parents of that class
-  see the same real list. There's no file-storage backend, so this stores
-  a title/notes/link, not an uploaded file itself.
+- **Learning materials with file uploads.** A teacher shares a material
+  (learning area, title, notes) and can **attach a file** — PDF, image
+  (png/jpg/gif/webp), Word, Excel, PowerPoint, text or CSV. Students and
+  parents of that class open it with one click from their dashboards (PDFs
+  and images open in the browser; Office files download). Files are stored
+  **in the database** (as base64), so they survive on hosts with no disk and
+  work with both local SQLite and Turso. Limit: **3 MB per file** by default
+  (set `MAX_UPLOAD_MB` to change it). Safety: only the listed types are
+  accepted, each is checked against the file's real contents (a web page
+  renamed `.pdf` is rejected; HTML and SVG are not allowed at all), and a
+  file can only be opened by that class's teacher, its students, parents with
+  a child in the class, and admins.
 - **Quizzes.** A teacher writes multiple-choice questions for their class;
   students answer them and see live feedback. The answer key
   (`correct_index`) is never sent to a student in the question list, and
@@ -240,9 +248,11 @@ saving)**, whatever time zone the device or server is in.
   when `NODE_ENV=production`.
 - Login IDs are global, so pick an ID scheme that won't collide across
   roles in practice — the database rejects a duplicate outright.
-- Materials store a title/notes/link, not an actual uploaded file — adding
-  real file storage (and a virus/type check on uploads) is the natural
-  next step if teachers need to attach PDFs or images directly.
+- Uploaded files live in the database, which suits worksheets and notes. For
+  large files (videos, big scans) use a link in the notes instead, or move
+  uploads to object storage (e.g. S3/R2) — the database has storage limits
+  (check your Turso plan) and every file is read in full on download. There is
+  no virus scanner; uploads are limited to the safe file types above.
 - There's no formal grading/competency module yet (see above) — attendance
   is the only "results" signal right now. A `grades` or `assessments`
   table following the same `class`/`teacher_id`/`student_id` pattern as

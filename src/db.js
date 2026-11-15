@@ -149,6 +149,15 @@ async function doInitSchema() {
       created_at    TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS material_files (
+      material_id   INTEGER PRIMARY KEY REFERENCES materials(id) ON DELETE CASCADE,
+      file_name     TEXT NOT NULL,
+      mime_type     TEXT NOT NULL,
+      file_size     INTEGER NOT NULL,
+      data_b64      TEXT NOT NULL,
+      created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS quiz_questions (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       class         TEXT NOT NULL,
@@ -477,8 +486,26 @@ async function addMaterial({ klass, learningArea, title, notes, teacherId }) {
   return get(`SELECT * FROM materials WHERE id = ?`, [info.lastInsertRowid]);
 }
 
+// Listing never selects the file contents (data_b64) — only the small
+// metadata — so the materials list stays fast even with many files.
 async function getMaterialsForClass(klass) {
-  return all(`SELECT * FROM materials WHERE class = ? ORDER BY created_at DESC`, [klass]);
+  return all(
+    `SELECT m.*, f.file_name, f.mime_type, f.file_size
+     FROM materials m LEFT JOIN material_files f ON f.material_id = m.id
+     WHERE m.class = ? ORDER BY m.created_at DESC`,
+    [klass]
+  );
+}
+
+async function saveMaterialFile({ materialId, fileName, mimeType, size, dataB64 }) {
+  await run(
+    `INSERT INTO material_files (material_id, file_name, mime_type, file_size, data_b64) VALUES (?, ?, ?, ?, ?)`,
+    [materialId, fileName, mimeType, size, dataB64]
+  );
+}
+
+async function getMaterialFile(materialId) {
+  return get(`SELECT * FROM material_files WHERE material_id = ?`, [materialId]);
 }
 
 async function getMaterial(id) {
@@ -715,6 +742,8 @@ module.exports = {
   addMaterial,
   getMaterialsForClass,
   getMaterial,
+  saveMaterialFile,
+  getMaterialFile,
   deleteMaterial,
   addQuizQuestion,
   getQuizzesForClass,
