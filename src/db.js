@@ -158,6 +158,29 @@ async function doInitSchema() {
       created_at    TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS assessments (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      class         TEXT NOT NULL,
+      learning_area TEXT NOT NULL,
+      title         TEXT NOT NULL,
+      term          TEXT DEFAULT '',
+      assessed_on   TEXT NOT NULL,
+      max_marks     INTEGER,
+      published     INTEGER NOT NULL DEFAULT 0,
+      teacher_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS grades (
+      assessment_id INTEGER NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
+      student_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      marks         REAL,
+      level         TEXT CHECK (level IS NULL OR level IN ('EE','ME','AE','BE')),
+      remarks       TEXT DEFAULT '',
+      updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (assessment_id, student_id)
+    );
+
     CREATE TABLE IF NOT EXISTS quiz_questions (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       class         TEXT NOT NULL,
@@ -169,6 +192,8 @@ async function doInitSchema() {
       option_c      TEXT,
       option_d      TEXT,
       correct_index INTEGER CHECK (correct_index IS NULL OR correct_index BETWEEN 0 AND 3),
+      model_answer  TEXT,
+      reveal_answer INTEGER NOT NULL DEFAULT 1,
       teacher_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       created_at    TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -221,6 +246,8 @@ async function doInitSchema() {
         option_c      TEXT,
         option_d      TEXT,
         correct_index INTEGER CHECK (correct_index IS NULL OR correct_index BETWEEN 0 AND 3),
+        model_answer  TEXT,
+        reveal_answer INTEGER NOT NULL DEFAULT 1,
         teacher_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         created_at    TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -229,6 +256,13 @@ async function doInitSchema() {
         FROM quiz_questions_old;
       DROP TABLE quiz_questions_old;
     `);
+  }
+  // Databases created before teachers could write a model answer.
+  for (const stmt of [
+    `ALTER TABLE quiz_questions ADD COLUMN model_answer TEXT`,
+    `ALTER TABLE quiz_questions ADD COLUMN reveal_answer INTEGER NOT NULL DEFAULT 1`,
+  ]) {
+    try { await run(stmt); } catch (e) { /* column already exists — fine */ }
   }
 }
 
@@ -520,16 +554,19 @@ async function deleteMaterial(id) {
 // type: 'structured' (multiple choice — needs all 4 options + correctIndex)
 // or 'unstructured' (open-ended — options/correctIndex are left null; a
 // student types a free-text answer instead, stored in quiz_responses).
-async function addQuizQuestion({ klass, learningArea, type, question, optionA, optionB, optionC, optionD, correctIndex, teacherId }) {
+async function addQuizQuestion({ klass, learningArea, type, question, optionA, optionB, optionC, optionD, correctIndex, modelAnswer, revealAnswer, teacherId }) {
   const isStructured = type !== 'unstructured';
   const info = await run(
-    `INSERT INTO quiz_questions (class, learning_area, type, question, option_a, option_b, option_c, option_d, correct_index, teacher_id)
-     VALUES (@class, @learning_area, @type, @question, @option_a, @option_b, @option_c, @option_d, @correct_index, @teacher_id)`,
+    `INSERT INTO quiz_questions (class, learning_area, type, question, option_a, option_b, option_c, option_d, correct_index, model_answer, reveal_answer, teacher_id)
+     VALUES (@class, @learning_area, @type, @question, @option_a, @option_b, @option_c, @option_d, @correct_index, @model_answer, @reveal_answer, @teacher_id)`,
     {
       class: klass, learning_area: learningArea, type: isStructured ? 'structured' : 'unstructured', question,
       option_a: isStructured ? optionA : null, option_b: isStructured ? optionB : null,
       option_c: isStructured ? optionC : null, option_d: isStructured ? optionD : null,
-      correct_index: isStructured ? correctIndex : null, teacher_id: teacherId,
+      correct_index: isStructured ? correctIndex : null,
+      model_answer: isStructured ? null : (modelAnswer || null),
+      reveal_answer: revealAnswer === false || revealAnswer === 0 ? 0 : 1,
+      teacher_id: teacherId,
     }
   );
   return get(`SELECT * FROM quiz_questions WHERE id = ?`, [info.lastInsertRowid]);
@@ -586,6 +623,82 @@ async function getThreadForStudent(studentId) {
     `SELECT m.*, fu.name AS from_name, fu.role AS from_role FROM messages m
      JOIN users fu ON fu.id = m.from_user_id
      WHERE m.student_id = ? ORDER BY m.created_at ASC`,
+    [studentId]
+  );
+}
+
+// ─── ASSESSMENTS & GRADES ───
+// A teacher creates an assessment for their class, enters each student's
+// marks and/or CBC competency level (EE/ME/AE/BE) plus remarks, and then
+// PUBLISHES it. Students and parents only ever see published assessments.
+async function createAssessment({ klass, learningArea, title, term, assessedOn, maxMarks, teacherId }) {
+  const info = await run(
+    `INSERT INTO assessments (class, learning_area, title, term, assessed_on, max_marks, teacher_id)
+     VALUES (@class, @learning_area, @title, @term, @assessed_on, @max_marks, @teacher_id)`,
+    { class: klass, learning_area: learningArea, title, term: term || '', assessed_on: assessedOn, max_marks: maxMarks ?? null, teacher_id: teacherId }
+  );
+  return getAssessment(info.lastInsertRowid);
+}
+
+async function getAssessment(id) {
+  return get(`SELECT * FROM assessments WHERE id = ?`, [id]);
+}
+
+async function listAssessmentsForClass(klass, { publishedOnly } = {}) {
+  return all(
+    `SELECT a.*, (SELECT COUNT(*) FROM grades g WHERE g.assessment_id = a.id) AS graded_count
+     FROM assessments a WHERE a.class = ? ${publishedOnly ? 'AND a.published = 1' : ''}
+     ORDER BY a.assessed_on DESC, a.id DESC`,
+    [klass]
+  );
+}
+
+async function setAssessmentPublished(id, published) {
+  return run(`UPDATE assessments SET published = ? WHERE id = ?`, [published ? 1 : 0, id]);
+}
+
+async function deleteAssessment(id) {
+  return run(`DELETE FROM assessments WHERE id = ?`, [id]);
+}
+
+// Every student in the class, with their grade for this assessment (or nulls).
+async function getGradesRoster(assessmentId, klass) {
+  return all(
+    `SELECT u.id AS student_id, u.login_id, u.name, g.marks, g.level, g.remarks
+     FROM users u LEFT JOIN grades g ON g.student_id = u.id AND g.assessment_id = ?
+     WHERE u.role = 'student' AND u.class = ? ORDER BY u.name ASC`,
+    [assessmentId, klass]
+  );
+}
+
+// entries: [{ studentId, marks, level, remarks }]. A row with no marks, no
+// level and no remarks removes that student's grade (back to "not graded").
+async function saveGrades(assessmentId, entries) {
+  for (const e of entries) {
+    const empty = e.marks == null && !e.level && !e.remarks;
+    if (empty) {
+      await run(`DELETE FROM grades WHERE assessment_id = ? AND student_id = ?`, [assessmentId, e.studentId]);
+    } else {
+      await run(
+        `INSERT INTO grades (assessment_id, student_id, marks, level, remarks)
+         VALUES (@assessment_id, @student_id, @marks, @level, @remarks)
+         ON CONFLICT(assessment_id, student_id) DO UPDATE SET
+           marks = excluded.marks, level = excluded.level, remarks = excluded.remarks, updated_at = datetime('now')`,
+        { assessment_id: assessmentId, student_id: e.studentId, marks: e.marks ?? null, level: e.level || null, remarks: e.remarks || '' }
+      );
+    }
+  }
+}
+
+// What a student (or their parent) is allowed to see: only grades from
+// PUBLISHED assessments.
+async function getPublishedResultsForStudent(studentId) {
+  return all(
+    `SELECT a.id AS assessment_id, a.title, a.learning_area, a.term, a.assessed_on, a.max_marks,
+            g.marks, g.level, g.remarks
+     FROM grades g JOIN assessments a ON a.id = g.assessment_id
+     WHERE g.student_id = ? AND a.published = 1
+     ORDER BY a.assessed_on DESC, a.id DESC`,
     [studentId]
   );
 }
@@ -741,6 +854,14 @@ module.exports = {
   getAttendanceCountsForClassOnDate,
   addMaterial,
   getMaterialsForClass,
+  createAssessment,
+  getAssessment,
+  listAssessmentsForClass,
+  setAssessmentPublished,
+  deleteAssessment,
+  getGradesRoster,
+  saveGrades,
+  getPublishedResultsForStudent,
   getMaterial,
   saveMaterialFile,
   getMaterialFile,

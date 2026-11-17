@@ -301,6 +301,7 @@
       <button class="tab-btn" onclick="switchTab('s','s-quiz',this)">🧠 Quiz</button>
       <button class="tab-btn" onclick="switchTab('s','s-lessons',this)">📖 Lessons</button>
       <button class="tab-btn" onclick="switchTab('s','s-library',this)">📗 CBC Library</button>
+      <button class="tab-btn" onclick="switchTab('s','s-results',this)">🎓 Results</button>
       <button class="tab-btn" onclick="switchTab('s','s-progress',this)">📊 Progress</button>
     </div>
 
@@ -400,6 +401,23 @@
     </div>
 
     <!-- Progress Tab -->
+    <div id="s-results" class="tab-content">
+      <p class="section-title">🎓 My Results <span class="badge" id="s-results-count">0</span></p>
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;gap:24px;flex-wrap:wrap;">
+          <div><div style="font-size:12px;color:var(--muted);font-weight:700;">ASSESSMENTS</div><div style="font-size:26px;font-weight:800;" id="s-results-total">0</div></div>
+          <div><div style="font-size:12px;color:var(--muted);font-weight:700;">AVERAGE (WHERE MARKED)</div><div style="font-size:26px;font-weight:800;" id="s-results-avg">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Assessment</th><th>Learning Area</th><th>Date</th><th>Marks</th><th>Level</th><th>Teacher's Remarks</th></tr></thead>
+          <tbody id="s-results-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
+        </table>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;">Levels: <strong>EE</strong> Exceeds Expectations · <strong>ME</strong> Meets Expectations · <strong>AE</strong> Approaches Expectations · <strong>BE</strong> Below Expectations. Results appear here once your teacher publishes them.</p>
+      </div>
+    </div>
+
     <div id="s-progress" class="tab-content">
       <p class="section-title">📊 My Attendance</p>
       <div class="card">
@@ -639,7 +657,12 @@
                 </select>
               </div>
             </div>
-            <p id="nq-unstructured-hint" style="display:none;font-size:12px;color:var(--muted);margin:-6px 0 14px;">Students will type a free-text answer for you to read — there's no single correct answer to mark automatically.</p>
+            <p id="nq-unstructured-hint" style="display:none;font-size:12px;color:var(--muted);margin:-6px 0 14px;">Students will type a free-text answer for you to read. Write the correct (model) answer below so you have a marking guide.</p>
+            <div id="nq-model-group" style="display:none;">
+              <div class="form-group"><label>Correct / Model Answer</label>
+                <textarea id="nq-model" placeholder="What a good answer should say…" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;resize:vertical;min-height:70px;"></textarea></div>
+              <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:14px;cursor:pointer;"><input type="checkbox" id="nq-reveal" checked> Show this answer to students after they submit their own</label>
+            </div>
             <div id="nq-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
             <button onclick="addQuiz()" style="width:100%;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Add to Class Quiz 🧠</button>
           </div>
@@ -653,13 +676,44 @@
 
     <!-- Results Tab -->
     <div id="t-results" class="tab-content">
-      <p class="section-title">📊 Attendance Summary — <span id="teacher-performance-class">—</span></p>
+      <p class="section-title">🎓 Grading — <span id="teacher-performance-class">—</span></p>
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <p style="font-weight:700;margin-bottom:12px;">➕ New Assessment</p>
+            <div class="form-group"><label>Learning Area</label>
+              <select id="tg-area" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;">
+                <option>English Language Activities</option><option>Kiswahili Language Activities</option><option>Mathematical Activities</option><option>Environmental Activities</option><option>Religious Education Activities</option><option>Creative Activities</option>
+              </select></div>
+            <div class="form-group"><label>Title</label>
+              <input id="tg-title" type="text" placeholder="e.g. End of Term 2 Test" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group"><label>Term</label>
+                <select id="tg-term" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;"><option value="">—</option><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></div>
+              <div class="form-group"><label>Date</label>
+                <input id="tg-date" type="date" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;"></div>
+            </div>
+            <div class="form-group"><label>Maximum Marks <span style="text-transform:none;font-weight:400;">(leave blank to grade by level only)</span></label>
+              <input id="tg-max" type="number" min="1" max="1000" placeholder="e.g. 20" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;"></div>
+            <div id="tg-error" style="display:none;background:#FFEBEE;color:var(--red);border:1px solid #FFCDD2;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;"></div>
+            <button onclick="createAssessmentFromForm()" style="width:100%;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Create Assessment 🎓</button>
+          </div>
+          <p class="section-title" style="margin-top:20px;">📋 Assessments <span class="badge" id="tg-count">0</span></p>
+          <div class="lesson-list" id="tg-list"><div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div></div>
+        </div>
+        <div>
+          <p class="section-title">✍️ Enter Grades</p>
+          <div class="card" id="tg-grade-panel"><div style="text-align:center;color:var(--muted);padding:20px;">Create an assessment, then choose <strong>Grade</strong> to enter marks and levels for each learner. Learners and parents only see an assessment once you <strong>Publish</strong> it.</div></div>
+        </div>
+      </div>
+
+      <p class="section-title" style="margin-top:28px;">📅 Attendance Summary</p>
       <div class="card">
         <table>
           <thead><tr><th>Student</th><th>Present</th><th>Absent</th><th>Late</th><th>Attendance Rate</th></tr></thead>
           <tbody id="t-results-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
         </table>
-        <p style="font-size:12px;color:var(--muted);margin-top:10px">Computed from the class register — this reflects the attendance you've actually recorded. There is no competency/grading feature yet.</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px">Computed from the class register — this reflects the attendance you've actually recorded.</p>
       </div>
     </div>
 
@@ -774,6 +828,7 @@
       <button class="tab-btn active" onclick="switchTab('p','p-timetable',this)">📆 Timetable</button>
       <button class="tab-btn" onclick="switchTab('p','p-attendance',this)">📅 Attendance</button>
       <button class="tab-btn" onclick="switchTab('p','p-materials',this)">📚 Materials</button>
+      <button class="tab-btn" onclick="switchTab('p','p-results',this)">🎓 Results</button>
       <button class="tab-btn" onclick="switchTab('p','p-messages',this)">💬 Messages</button>
     </div>
 
@@ -813,6 +868,23 @@
     </div>
 
     <!-- Messages -->
+    <div id="p-results" class="tab-content">
+      <p class="section-title">🎓 Results — <span id="p-results-child">your child</span> <span class="badge" id="p-results-count">0</span></p>
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;gap:24px;flex-wrap:wrap;">
+          <div><div style="font-size:12px;color:var(--muted);font-weight:700;">ASSESSMENTS</div><div style="font-size:26px;font-weight:800;" id="p-results-total">0</div></div>
+          <div><div style="font-size:12px;color:var(--muted);font-weight:700;">AVERAGE (WHERE MARKED)</div><div style="font-size:26px;font-weight:800;" id="p-results-avg">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Assessment</th><th>Learning Area</th><th>Date</th><th>Marks</th><th>Level</th><th>Teacher's Remarks</th></tr></thead>
+          <tbody id="p-results-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px;">Loading…</td></tr></tbody>
+        </table>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;">Levels: <strong>EE</strong> Exceeds Expectations · <strong>ME</strong> Meets Expectations · <strong>AE</strong> Approaches Expectations · <strong>BE</strong> Below Expectations. Results appear here once the class teacher publishes them.</p>
+      </div>
+    </div>
+
     <div id="p-messages" class="tab-content">
       <div class="grid-2">
         <div>
@@ -1269,6 +1341,7 @@ function showDash(role) {
     loadStudentGradeBooks();
     loadStudentTimetable();
     loadStudentMaterials();
+    loadStudentResults();
     loadStudentAttendance();
   }
   if (role === 'parent') {
@@ -1732,7 +1805,38 @@ function switchTab(group, targetId, btn) {
   const contents = btn.closest('.screen').querySelectorAll('.tab-content');
   contents.forEach(c => c.classList.remove('active'));
   document.getElementById(targetId).classList.add('active');
+  refreshTab(targetId);
 }
+
+// Re-loads a tab's data whenever it is opened, so a file, result or message
+// the teacher shared a moment ago shows up without logging out and in. (The
+// student quiz tab is skipped so switching tabs never restarts a quiz.)
+const TAB_REFRESH = {
+  's-subjects': () => loadStudentMaterials(),
+  's-lessons': () => loadStudentMaterials(),
+  's-results': () => loadStudentResults(),
+  's-progress': () => loadStudentAttendance(),
+  't-class': () => loadTeacherTimetable(),
+  't-upload': () => loadTeacherMaterials(),
+  't-results': () => loadTeacherResults(),
+  'p-timetable': () => loadParentTimetable(),
+  'p-attendance': () => loadParentAttendance(),
+  'p-materials': () => loadParentMaterials(),
+  'p-results': () => loadParentResults(),
+  'p-messages': () => loadParentThread(),
+};
+function refreshTab(tabId) {
+  const fn = TAB_REFRESH[tabId];
+  if (fn) { try { fn(); } catch (e) { /* ignore */ } }
+}
+// Students and parents: when they come back to the browser tab, refresh the
+// tab they're looking at.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !currentUser) return;
+  if (currentUser.role !== 'student' && currentUser.role !== 'parent') return;
+  const active = document.querySelector('.screen.active .tab-content.active');
+  if (active) refreshTab(active.id);
+});
 
 // ─── SHARED HELPERS ───
 function escapeHtml(s) {
@@ -1844,7 +1948,7 @@ function renderMaterialsList(containerId, materials, { showDelete } = {}) {
       <div class="lesson-info">
         <div class="lesson-title">${escapeHtml(m.title)}</div>
         <div class="lesson-meta">${escapeHtml(m.learning_area)}${m.notes ? ' · ' + escapeHtml(m.notes) : ''}</div>
-        ${m.file_name ? `<a href="/api/materials/${m.id}/file" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--student);text-decoration:none;">${fileIcon(m.file_name)} ${escapeHtml(m.file_name)} <span style="font-weight:400;color:var(--muted);">(${fmtFileSize(m.file_size)})</span></a>` : ''}
+        ${m.file_name ? `<a href="/api/materials/${m.id}/file" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;font-size:13px;font-weight:700;color:var(--student);text-decoration:none;">${fileIcon(m.file_name)} ${escapeHtml(m.file_name)} <span style="font-weight:400;color:var(--muted);">(${fmtFileSize(m.file_size)})</span></a> <a href="/api/materials/${m.id}/file?download=1" style="font-size:12px;color:var(--muted);margin-left:8px;">⬇ Download</a>` : ''}
       </div>
       ${showDelete ? `<button class="logout-btn" style="background:#FFEBEE;border:1px solid #FFCDD2;color:var(--red);padding:5px 10px;font-size:12px;" onclick="deleteMaterialItem(${m.id})">Remove</button>` : ''}
     </div>
@@ -2263,7 +2367,264 @@ function renderAttendanceSummary(data, ids) {
   }
 }
 
+// ═══════════════ GRADING & RESULTS ═══════════════
+function levelPill(level) {
+  const cls = { EE: 'pill-green', ME: 'pill-blue', AE: 'pill-gold', BE: 'pill-red' }[level];
+  return level ? `<span class="pill ${cls}">${level}</span>` : '—';
+}
+// A convenience only: common school bands. The teacher can change any level.
+function suggestLevel(marks, max) {
+  const pct = (marks / max) * 100;
+  return pct >= 75 ? 'EE' : pct >= 50 ? 'ME' : pct >= 25 ? 'AE' : 'BE';
+}
+
+let teacherAssessments = [];
+let gradingAssessment = null;
+let gradingRoster = [];
+
+async function loadAssessments() {
+  const list = document.getElementById('tg-list');
+  if (!list) return;
+  const dateEl = document.getElementById('tg-date');
+  if (dateEl && !dateEl.value) dateEl.value = todayISO();
+  if (!currentUser.class) {
+    list.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px;">You have no class assigned yet.</div>`;
+    return;
+  }
+  try {
+    const data = await api(`/api/assessments?class=${encodeURIComponent(currentUser.class)}`);
+    teacherAssessments = data.assessments;
+    renderAssessmentList();
+  } catch (e) {
+    list.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px;">Could not load assessments.</div>`;
+  }
+}
+
+function renderAssessmentList() {
+  const list = document.getElementById('tg-list');
+  const count = document.getElementById('tg-count');
+  if (count) count.textContent = teacherAssessments.length;
+  const size = (currentUser && currentUser.classSize) || 0;
+  list.innerHTML = teacherAssessments.length ? teacherAssessments.map(a => `
+    <div class="lesson-row" style="align-items:flex-start;flex-wrap:wrap;">
+      <div class="lesson-icon" style="background:#FFF8E1">🎓</div>
+      <div class="lesson-info" style="min-width:160px;">
+        <div class="lesson-title">${escapeHtml(a.title)}</div>
+        <div class="lesson-meta">${escapeHtml(a.learning_area)}${a.term ? ' · ' + escapeHtml(a.term) : ''} · ${fmtDate(a.assessed_on)} · ${a.max_marks ? 'out of ' + a.max_marks : 'levels only'} · ${a.graded_count}/${size} graded</div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="logout-btn" style="background:#E3F2FD;border:1px solid #BBDEFB;color:var(--student);padding:5px 10px;font-size:12px;" onclick="openGrading(${a.id})">✍️ Grade</button>
+          <button class="logout-btn" style="background:${a.published ? '#F5F5F5' : '#E8F5E9'};border:1px solid ${a.published ? '#E0E0E0' : '#A5D6A7'};color:${a.published ? 'var(--muted)' : 'var(--green)'};padding:5px 10px;font-size:12px;" onclick="toggleAssessmentPublished(${a.id})">${a.published ? '🙈 Unpublish' : '📣 Publish'}</button>
+          <button class="logout-btn" style="background:#FFEBEE;border:1px solid #FFCDD2;color:var(--red);padding:5px 10px;font-size:12px;" onclick="deleteAssessmentItem(${a.id})">Delete</button>
+        </div>
+      </div>
+      <span class="pill ${a.published ? 'pill-green' : 'pill-gold'}">${a.published ? 'Published' : 'Draft'}</span>
+    </div>`).join('') : `<div style="text-align:center;color:var(--muted);padding:20px;">No assessments yet — create one above.</div>`;
+}
+
+async function createAssessmentFromForm() {
+  const err = document.getElementById('tg-error');
+  err.style.display = 'none';
+  if (!currentUser.class) {
+    err.textContent = 'You have no class assigned yet — ask the school administrator to assign you one.';
+    err.style.display = 'block';
+    return;
+  }
+  const title = document.getElementById('tg-title').value.trim();
+  if (!title) { err.textContent = 'Please enter a title.'; err.style.display = 'block'; return; }
+  const maxRaw = document.getElementById('tg-max').value.trim();
+  try {
+    const data = await api('/api/assessments', {
+      method: 'POST',
+      body: JSON.stringify({
+        class: currentUser.class,
+        learningArea: document.getElementById('tg-area').value,
+        title,
+        term: document.getElementById('tg-term').value,
+        assessedOn: document.getElementById('tg-date').value || todayISO(),
+        maxMarks: maxRaw === '' ? null : Number(maxRaw),
+      })
+    });
+    document.getElementById('tg-title').value = '';
+    document.getElementById('tg-max').value = '';
+    await loadAssessments();
+    openGrading(data.assessment.id);
+  } catch (e) {
+    err.textContent = e.message || 'Could not create this assessment.';
+    err.style.display = 'block';
+  }
+}
+
+async function openGrading(id) {
+  const panel = document.getElementById('tg-grade-panel');
+  panel.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div>`;
+  try {
+    const data = await api(`/api/assessments/${id}/grades`);
+    gradingAssessment = data.assessment;
+    gradingRoster = data.roster;
+    renderGradingPanel();
+  } catch (e) {
+    panel.innerHTML = `<div style="color:var(--red);padding:12px;">${escapeHtml(e.message || 'Could not load this assessment.')}</div>`;
+  }
+}
+
+function renderGradingPanel() {
+  const a = gradingAssessment;
+  const panel = document.getElementById('tg-grade-panel');
+  if (!a) return;
+  const IN = 'padding:7px 8px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;outline:none;';
+  if (!gradingRoster.length) {
+    panel.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px;">There are no students in ${escapeHtml(a.class)} yet.</div>`;
+    return;
+  }
+  const rows = gradingRoster.map(s => `
+    <tr>
+      <td style="min-width:120px;"><strong>${escapeHtml(s.name)}</strong><div style="font-size:11px;color:var(--muted);">${escapeHtml(s.login_id)}</div></td>
+      ${a.max_marks ? `<td><input type="number" id="gm-${s.student_id}" min="0" max="${a.max_marks}" step="0.5" value="${s.marks ?? ''}" style="${IN}width:72px;"> <span style="font-size:12px;color:var(--muted);">/ ${a.max_marks}</span></td>` : ''}
+      <td><select id="gl-${s.student_id}" style="${IN}">
+        ${['', 'EE', 'ME', 'AE', 'BE'].map(l => `<option value="${l}" ${s.level === l || (!s.level && l === '') ? 'selected' : ''}>${l || '—'}</option>`).join('')}
+      </select></td>
+      <td><input type="text" id="gr-${s.student_id}" maxlength="500" value="${escapeHtml(s.remarks || '')}" placeholder="Remarks (optional)" style="${IN}width:100%;min-width:140px;"></td>
+    </tr>`).join('');
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <div>
+        <div style="font-weight:700;">${escapeHtml(a.title)}</div>
+        <div style="font-size:12px;color:var(--muted);">${escapeHtml(a.learning_area)}${a.term ? ' · ' + escapeHtml(a.term) : ''} · ${fmtDate(a.assessed_on)} · ${a.max_marks ? 'out of ' + a.max_marks : 'levels only'}</div>
+      </div>
+      <span class="pill ${a.published ? 'pill-green' : 'pill-gold'}">${a.published ? 'Published' : 'Draft — not visible yet'}</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Learner</th>${a.max_marks ? '<th>Marks</th>' : ''}<th>Level</th><th>Remarks</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div id="tg-save-msg" style="display:none;margin-top:10px;font-size:13px;font-weight:600;"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button onclick="saveGradingPanel()" style="flex:1;min-width:140px;padding:11px;background:var(--teacher);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Save Grades 💾</button>
+      ${a.max_marks ? `<button onclick="suggestAllLevels()" style="padding:11px 14px;background:#fff;color:var(--ink);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;" title="EE 75%+, ME 50–74%, AE 25–49%, BE under 25%. You can change any level afterwards.">Suggest levels from marks</button>` : ''}
+    </div>
+    ${a.max_marks ? `<p style="font-size:12px;color:var(--muted);margin-top:8px;">“Suggest levels” uses common school bands (EE 75%+, ME 50–74%, AE 25–49%, BE under 25%) — it's only a starting point; you can change any level.</p>` : ''}
+    <p style="font-size:12px;color:var(--muted);margin-top:6px;">Leave a learner's row empty to mark them as not graded. Saving doesn't share anything — use <strong>Publish</strong> in the list when you're ready for learners and parents to see these results.</p>`;
+}
+
+function suggestAllLevels() {
+  const a = gradingAssessment;
+  gradingRoster.forEach(s => {
+    const m = document.getElementById(`gm-${s.student_id}`);
+    const l = document.getElementById(`gl-${s.student_id}`);
+    if (m && l && m.value !== '') l.value = suggestLevel(Number(m.value), a.max_marks);
+  });
+}
+
+async function saveGradingPanel() {
+  const a = gradingAssessment;
+  const msg = document.getElementById('tg-save-msg');
+  const entries = gradingRoster.map(s => {
+    const m = a.max_marks ? document.getElementById(`gm-${s.student_id}`).value.trim() : '';
+    return {
+      studentId: s.student_id,
+      marks: m === '' ? null : Number(m),
+      level: document.getElementById(`gl-${s.student_id}`).value || null,
+      remarks: document.getElementById(`gr-${s.student_id}`).value.trim(),
+    };
+  });
+  try {
+    const data = await api(`/api/assessments/${a.id}/grades`, { method: 'PUT', body: JSON.stringify({ entries }) });
+    gradingRoster = data.roster;
+    msg.style.display = 'block';
+    msg.style.color = 'var(--green)';
+    msg.textContent = a.published ? '✅ Saved — learners and parents can see the updated results.' : '✅ Grades saved (still a draft — publish when ready).';
+    await loadAssessments();
+  } catch (e) {
+    msg.style.display = 'block';
+    msg.style.color = 'var(--red)';
+    msg.textContent = e.message || 'Could not save the grades.';
+  }
+}
+
+async function toggleAssessmentPublished(id) {
+  const a = teacherAssessments.find(x => x.id === id);
+  if (!a) return;
+  const size = (currentUser && currentUser.classSize) || 0;
+  if (!a.published) {
+    const missing = Math.max(0, size - a.graded_count);
+    const text = missing > 0
+      ? `${missing} learner${missing === 1 ? ' has' : 's have'} not been graded yet. Publish anyway?\n\nLearners and parents will be able to see the grades you've entered.`
+      : 'Publish these results? Learners and parents will be able to see them.';
+    if (!confirm(text)) return;
+  }
+  try {
+    await api(`/api/assessments/${id}/publish`, { method: 'PATCH', body: JSON.stringify({ published: !a.published }) });
+    if (gradingAssessment && gradingAssessment.id === id) gradingAssessment.published = a.published ? 0 : 1;
+    await loadAssessments();
+    if (gradingAssessment && gradingAssessment.id === id) renderGradingPanel();
+  } catch (e) {
+    alert(e.message || 'Could not change the publish status.');
+  }
+}
+
+async function deleteAssessmentItem(id) {
+  if (!confirm('Delete this assessment and all its grades? This cannot be undone.')) return;
+  try {
+    await api(`/api/assessments/${id}`, { method: 'DELETE' });
+    if (gradingAssessment && gradingAssessment.id === id) {
+      gradingAssessment = null;
+      document.getElementById('tg-grade-panel').innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px;">Choose an assessment to grade.</div>`;
+    }
+    await loadAssessments();
+  } catch (e) {
+    alert(e.message || 'Could not delete this assessment.');
+  }
+}
+
+// ── Student & parent: published results only ──
+function renderResultsTable(bodyId, results) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  body.innerHTML = results.length ? results.map(r => `
+    <tr>
+      <td><strong>${escapeHtml(r.title)}</strong>${r.term ? `<div style="font-size:11px;color:var(--muted);">${escapeHtml(r.term)}</div>` : ''}</td>
+      <td>${escapeHtml(r.learning_area)}</td>
+      <td style="white-space:nowrap;">${fmtDate(r.assessed_on)}</td>
+      <td>${r.marks != null && r.max_marks ? `${r.marks}/${r.max_marks}${r.percentage != null ? ` <span style="color:var(--muted);">(${r.percentage}%)</span>` : ''}` : '—'}</td>
+      <td>${levelPill(r.level)}</td>
+      <td style="font-size:13px;color:var(--muted);">${escapeHtml(r.remarks || '')}</td>
+    </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">No results have been published yet.</td></tr>`;
+}
+
+async function loadStudentResults() {
+  if (!currentUser || currentUser.role !== 'student') return;
+  try {
+    const data = await api(`/api/results/student/${currentUser.id}`);
+    renderResultsTable('s-results-body', data.results);
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('s-results-count', data.summary.assessments);
+    set('s-results-total', data.summary.assessments);
+    set('s-results-avg', data.summary.averagePercentage != null ? data.summary.averagePercentage + '%' : '—');
+  } catch (e) {
+    renderResultsTable('s-results-body', []);
+  }
+}
+
+async function loadParentResults() {
+  const child = parentChildren.find(c => c.id === selectedChildId);
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  if (!child) { renderResultsTable('p-results-body', []); return; }
+  set('p-results-child', child.name);
+  try {
+    const data = await api(`/api/results/student/${child.id}`);
+    renderResultsTable('p-results-body', data.results);
+    set('p-results-count', data.summary.assessments);
+    set('p-results-total', data.summary.assessments);
+    set('p-results-avg', data.summary.averagePercentage != null ? data.summary.averagePercentage + '%' : '—');
+  } catch (e) {
+    renderResultsTable('p-results-body', []);
+  }
+}
+
 async function loadTeacherResults() {
+  loadAssessments();
   const body = document.getElementById('t-results-body');
   if (!body) return;
   if (!currentUser.class || !registerRoster.length) {
@@ -2340,8 +2701,14 @@ function renderStudentQuiz() {
       </div>
       <div class="quiz-question">${escapeHtml(q.question)}</div>
       <p style="font-size:12px;color:var(--muted);margin:4px 0 10px;">✍️ Open-ended question — write your own answer. Your teacher will read it; there's no automatic right/wrong here.</p>
-      <textarea id="quiz-open-answer" placeholder="Type your answer..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;min-height:90px;outline:none;margin-bottom:10px;">${escapeHtml(q.myResponse || '')}</textarea>
-      <button id="quiz-open-submit" onclick="submitOpenAnswer()" style="width:100%;padding:11px;background:var(--student);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">${already ? 'Update My Answer ✓' : 'Submit Answer ✓'}</button>
+      <textarea id="quiz-open-answer" ${q.modelAnswer ? 'readonly' : ''} placeholder="Type your answer..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;min-height:90px;outline:none;margin-bottom:10px;">${escapeHtml(q.myResponse || '')}</textarea>
+      ${q.modelAnswer ? `
+        <div style="background:#E8F5E9;border-left:4px solid var(--green);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:14px;">
+          <strong>✅ Your teacher's answer</strong>
+          <div style="margin-top:4px;white-space:pre-wrap;">${escapeHtml(q.modelAnswer)}</div>
+        </div>
+        <button onclick="nextQuizQuestion()" style="width:100%;padding:11px;background:var(--student);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">Next question →</button>
+      ` : `<button id="quiz-open-submit" onclick="submitOpenAnswer()" style="width:100%;padding:11px;background:var(--student);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;">${already ? 'Update My Answer ✓' : 'Submit Answer ✓'}</button>`}
       <div id="quiz-fb"></div>
     `;
     return;
@@ -2360,6 +2727,11 @@ function renderStudentQuiz() {
   `;
 }
 
+function nextQuizQuestion() {
+  studentQuizIdx = (studentQuizIdx + 1) % studentQuizzes.length;
+  renderStudentQuiz();
+}
+
 async function submitOpenAnswer() {
   const q = studentQuizzes[studentQuizIdx];
   const textarea = document.getElementById('quiz-open-answer');
@@ -2373,7 +2745,16 @@ async function submitOpenAnswer() {
   }
   btn.disabled = true;
   try {
-    await api(`/api/quizzes/${q.id}/answer`, { method: 'POST', body: JSON.stringify({ answerText }) });
+    const saved = await api(`/api/quizzes/${q.id}/answer`, { method: 'POST', body: JSON.stringify({ answerText }) });
+    q.myResponse = answerText;
+    if (saved.modelAnswer) {
+      // The teacher wrote a model answer and allows it to be shown now.
+      q.modelAnswer = saved.modelAnswer;
+      renderStudentQuiz();
+      const fb2 = document.getElementById('quiz-fb');
+      if (fb2) { fb2.className = 'quiz-feedback correct'; fb2.textContent = '✅ Answer submitted — compare it with your teacher\'s answer above.'; }
+      return;
+    }
     fb.className = 'quiz-feedback correct';
     fb.textContent = '✅ Answer submitted — your teacher will read it.';
   } catch (e) {
@@ -2441,6 +2822,9 @@ async function loadTeacherQuizzes() {
           <div class="lesson-info">
             <div class="lesson-title">${escapeHtml(q.question)}</div>
             <div class="lesson-meta">${meta}</div>
+            ${isUnstructured ? (q.model_answer
+              ? `<div style="font-size:12px;margin-top:6px;color:var(--green);white-space:pre-wrap;">✅ <strong>Model answer:</strong> ${escapeHtml(q.model_answer)}${q.reveal_answer ? '' : ' <em style="color:var(--muted)">(hidden from students)</em>'}</div>`
+              : `<div style="font-size:12px;margin-top:6px;color:var(--muted);">No model answer written.</div>`) : ''}
             ${isUnstructured ? `<div id="responses-${q.id}" style="display:none;margin-top:10px;"></div>
             <button class="logout-btn" style="background:#E3F2FD;border:1px solid #BBDEFB;color:var(--student);margin-top:8px;padding:5px 10px;font-size:12px;" onclick="toggleResponses(${q.id})">👀 View Responses</button>` : ''}
           </div>
@@ -2488,6 +2872,7 @@ function onQuizTypeChange() {
   const isUnstructured = document.getElementById('nq-type').value === 'unstructured';
   document.getElementById('nq-options-group').style.display = isUnstructured ? 'none' : 'block';
   document.getElementById('nq-unstructured-hint').style.display = isUnstructured ? 'block' : 'none';
+  document.getElementById('nq-model-group').style.display = isUnstructured ? 'block' : 'none';
 }
 
 async function addQuiz() {
@@ -2511,9 +2896,13 @@ async function addQuiz() {
   const payload = { class: currentUser.class, learningArea, type, question };
 
   if (type === 'unstructured') {
+    payload.modelAnswer = document.getElementById('nq-model').value.trim();
+    payload.revealAnswer = document.getElementById('nq-reveal').checked;
     try {
       await api('/api/quizzes', { method: 'POST', body: JSON.stringify(payload) });
       document.getElementById('nq-question').value = '';
+      document.getElementById('nq-model').value = '';
+      document.getElementById('nq-reveal').checked = true;
       await loadTeacherQuizzes();
     } catch (e) {
       errBox.textContent = e.message || 'Could not add this quiz question.';
@@ -2677,6 +3066,7 @@ function refreshParentTabs() {
   loadParentTimetable();
   loadParentAttendance();
   loadParentMaterials();
+  loadParentResults();
   loadParentThread();
   const teacherNameEl = document.getElementById('parent-msg-thread-teacher');
   const child = parentChildren.find(c => c.id === selectedChildId);

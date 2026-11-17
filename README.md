@@ -43,6 +43,17 @@ no hardcoded demo content left anywhere in the app.
   renamed `.pdf` is rejected; HTML and SVG are not allowed at all), and a
   file can only be opened by that class's teacher, its students, parents with
   a child in the class, and admins.
+- **Grading and Results.** In the teacher's **Results** tab, a teacher creates
+  an assessment (learning area, title, term, date, optional maximum marks),
+  grades every learner — **marks and/or a CBC level (EE / ME / AE / BE)** plus
+  remarks — and then **Publishes** it. Until published, an assessment is a
+  private draft: learners and parents see nothing. Published results appear
+  in the **Results** tab of the learner's dashboard and of every linked
+  parent's dashboard (per child). Level-only assessments (no maximum marks)
+  are supported. "Suggest levels from marks" is a convenience using common
+  school bands (EE 75%+, ME 50–74%, AE 25–49%, BE under 25%); it is not an
+  official KNEC rule and the teacher can change any level. Unpublishing hides
+  the results again.
 - **Quizzes.** A teacher writes multiple-choice questions for their class;
   students answer them and see live feedback. The answer key
   (`correct_index`) is never sent to a student in the question list, and
@@ -66,12 +77,11 @@ no hardcoded demo content left anywhere in the app.
   auto-marked. Unstructured questions have no options at all: a student
   types a free-text answer, which is saved (and can be updated) for the
   teacher to read from a "👀 View Responses" panel in the Quiz Bank —
-  there's no automatic right/wrong to compute.
+  there's no automatic right/wrong to compute. The teacher can also write the
+  **correct (model) answer**; students see it right after they submit their
+  own (the teacher can switch that off per question), and it is never sent to a
+  student before they answer.
 
-There is deliberately **no separate letter-grading / competency-level
-module** — the "Results" tab shows an attendance summary computed from the
-real register, with an honest note that there's no grading feature yet,
-rather than a fake "EE/ME" competency table.
 
 ## Project structure
 
@@ -253,10 +263,9 @@ saving)**, whatever time zone the device or server is in.
   uploads to object storage (e.g. S3/R2) — the database has storage limits
   (check your Turso plan) and every file is read in full on download. There is
   no virus scanner; uploads are limited to the safe file types above.
-- There's no formal grading/competency module yet (see above) — attendance
-  is the only "results" signal right now. A `grades` or `assessments`
-  table following the same `class`/`teacher_id`/`student_id` pattern as
-  everything else here would be the natural way to add one.
+- Grading covers marks, levels and remarks per assessment. It does not yet
+  produce report cards, class rankings, term averages across assessments, or
+  weighted totals — natural next steps if the school wants them.
 - Timetable, register, materials and quizzes are all scoped by `class`
   (a plain string), not by a `class_id` foreign key — fine for the fixed
   six-class list this school uses, but worth normalizing into its own

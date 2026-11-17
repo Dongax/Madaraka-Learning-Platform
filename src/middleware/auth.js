@@ -36,7 +36,19 @@ function readSession(req, res, next) {
 }
 
 function requireAuth(req, res, next) {
-  if (!req.user) return res.status(401).json({ error: 'Not signed in.' });
+  if (!req.user) {
+    // A browser opening a link (e.g. a shared file) asks for HTML — show a
+    // readable page; API calls from the app still get JSON.
+    if (req.accepts(['json', 'html']) === 'html') {
+      return res.status(401).type('html').send(
+        '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+        '<title>Madaraka Primary</title><body style="font-family:system-ui,sans-serif;max-width:460px;margin:15vh auto;padding:0 20px;text-align:center;color:#222">' +
+        '<div style="font-size:48px">🔒</div><h2>Please sign in again</h2><p>Your session has ended. Sign in, then open the file again.</p>' +
+        '<p><a href="/" style="color:#1A6B3A;font-weight:700">Go to the sign-in page</a></p></body>'
+      );
+    }
+    return res.status(401).json({ error: 'Not signed in.' });
+  }
   next();
 }
 
